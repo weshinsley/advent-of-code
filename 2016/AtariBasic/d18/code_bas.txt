@@ -1,0 +1,17 @@
+0 GRAPHICS 7:? "Advent of Code 2016, Day 18":DIM S$(150):OPEN #1,4,0,"H:INPUT.TXT":I=1:S$(1,1)=".":DIM R(1000)
+1 GET #1,A:IF A<>10 THEN I=I+1:S$(I,I)=CHR$(A):COLOR 1+(A=46):PLOT I,0:GOTO 1
+2 ? :CLOSE #1:M=40:I=I+1:S$(I,I)=".":DIM Z$(I):T=0:FOR K=2 TO I-1:Z$(K,K)=" ":NEXT K:Z$(1)=".":Z$(I)=".":FOR K=1 TO M-1
+3 FOR J=2 TO I-1:T=T+(S$(J,J)="."):Z$(J,J)="."
+4 IF S$(J-1,J+1)="^^." OR S$(J-1,J+1)=".^^" OR S$(J-1,J+1)="^.." OR S$(J-1,J+1)="..^" THEN Z$(J,J)="^"
+5 IF K=M-1 AND Z$(J,J)="." THEN T=T+1
+6 COLOR 1+(Z$(J,J)="."):PLOT J,K:NEXT J:S$(2,I-1)=Z$(2,I-1)
+7 NEXT K:? T;" - any key for (b)";:CLOSE #1:POKE 764,255:OPEN #1,4,0,"K:":GET #1,A:CLOSE #1
+10 GRAPHICS 0:OPEN #1,4,0,"H:INPUT.TXT":I=1:S$(1,1)=".":I=0
+11 GET #1,A:IF A<>10 THEN I=I+1:S$(I,I)=CHR$(A):GOTO 11
+12 CLOSE #1:T=0:FOR J=2 TO I-1:T=T+(S$(J,J)="."):NEXT J:FOR K=1 TO 399999
+13 IF (K/10000)=K/10000 THEN ? K
+14 FOR J=2 TO I-2:Z$(J,J)="^"
+15 IF S$(J-1,J+1)="..." OR S$(J-1,J+1)="^^^" OR S$(J-1,J+1)="^.^" OR S$(J-1,J+1)=".^." THEN Z$(J,J)=".":T=T+1
+16 NEXT J
+18 S$(2,I-1)=Z$(2,I-1):NEXT K
+19 ? T

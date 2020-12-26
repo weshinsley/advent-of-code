@@ -1,0 +1,13 @@
+.classpath
+.project
+*.bak
+*.class
+.idea
+.Rproj.user
+.RData
+.Rhistory
+*.DS_Store
+*.pyc
+__pycache__
+*.hi
+*.o
