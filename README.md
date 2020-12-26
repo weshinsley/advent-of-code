@@ -1,8 +1,14 @@
-## Advent of code, 2016
+## Advent of code
 
-This repo records my attempts to foil the nefarious plans of the Easter Bunny, in 
-whatever languages seem to be challenging or fun to keep my programming skills 
-either sharp, or growing, or both. Or neither. Click below...
+This repo is my "one repo to rule them all" for Advent of Code solutions
+in a variety of different languages...
 
-[Atari Basic (and some 6502 assembler)](https://github.com/weshinsley/advent-of-code-2016/tree/master/AtariBasic)
+| Year | Java | R  | Atari Basic |
+|------|------|----|-------------|
+| 2015 |  25  |  0 |       0     |
+| 2016 | 3.5  |  0 |     21.5    |
+| 2017 |  0   | 25 |       0     |
+| 2018 |  25  | 25 |       0     | 
+| 2019 |  25  | 24 |       0     | 
+| 2020 |  25  | 16 |       0     |
 
