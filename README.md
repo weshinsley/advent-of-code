@@ -1,11 +1,12 @@
 ## Advent of code
 
-This repo is my "one repo to rule them all" for Advent of Code solutions
-in a variety of different languages...
+This repo is my "one repo to rule them all" of solutions to the
+fantastic [Advent of Code](https://adventofcode.com) puzzles, 
+in a variety of different languages.
 
 | Year          | Java             | R            | Atari Basic             |
 |---------------|------------------|--------------|-------------------------|
-| [2015](2015/) | [25](2015/Java)  |  0           | 0                       |
+| [2015](2015/) | [25](2015/Java)  | [25](2015/R) | 0                       |
 | [2016](2016/) | [3.5](2016/Java) |  0           | [21.5](2016/AtariBasic) |
 | [2017](2017/) | 0                | [25](2017/R) | 0                       |
 | [2018](2018/) | [25](2018/Java)  | [25](2018/R) | 0                       |
