@@ -40,7 +40,7 @@ public class wes {
   public static void main(String[] args) throws Exception {
     wes w = new wes();
     w.test();
-    String s = Utils.readLines("inputs/d01-input.txt").get(0);
+    String s = Utils.readLines("../R/01/input.txt").get(0);
     System.out.println(w.part1(s));
     System.out.println(w.part2(s));
   }

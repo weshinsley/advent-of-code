@@ -24,14 +24,29 @@ public class Utils {
     return ai;
   }
   
-  public static int[][] readIntGrid(String f, String sep) throws Exception {
+  public static int[][] readIntGrid_ji(String f, String sep) throws Exception {
     ArrayList<String> a = readLines(f);
     int[][] res = new int[a.size()][];
-    for (int i=0; i<a.size(); i++) {
-      String[] bits = a.get(i).split(sep);
-      res[i] = new int[bits.length];
-      for (int j=0; j<bits.length; j++) {
-        res[i][j]=Integer.parseInt(bits[j]);
+    for (int row=0; row<a.size(); row++) {
+      String[] bits = a.get(row).trim().split(sep);
+      res[row] = new int[bits.length];
+      for (int col=0; col<bits.length; col++) {
+        res[row][col]=Integer.parseInt(bits[col]);
+      }
+    }
+    return res;
+  }
+  
+
+  public static int[][] readIntGrid_ij(String f, String sep) throws Exception {
+    ArrayList<String> a = readLines(f);
+    int no_rows = a.size();
+    int no_cols = a.get(0).trim().split(sep).length;
+    int[][] res = new int[no_cols][no_rows];
+    for (int row=0; row<a.size(); row++) {
+      String[] bits = a.get(row).trim().split(sep);
+      for (int col=0; col<bits.length; col++) {
+        res[col][row]=Integer.parseInt(bits[col]);
       }
     }
     return res;
