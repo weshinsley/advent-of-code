@@ -136,6 +136,10 @@ public class Utils {
   public static void test(boolean x, boolean y) throws Exception {
     if (x!=y) throw new Exception("TEST FAILED!");
   }
+  public static void test(String x, String y) throws Exception {
+    if (!x.equals(y)) throw new Exception("TEST FAILED!");
+  }
+  
   
   public static void copyGrid(int[][] x, int[][] y) {
     for (int j=0; j<x.length; j++) {
