@@ -3,11 +3,11 @@ for /L %%x in (1, 1, 9) do (
   echo Day %%x
   echo -----
   java d0%%x.wes
-  echo .
+  echo.
 )
-for /L %%x in (10, 1, 12) do (
+for /L %%x in (10, 1, 13) do (
   echo Day %%x
   echo ------
   java d%%x.wes
-  echo .
+  echo.
 )
