@@ -29,7 +29,7 @@ public class wes {
     return thing[0] * thing[1];
   }
   
-  String part2(String input) {
+  public String part2(String input) {
     int[] new_input = new int[input.length() + 5];
     for (int i=0; i<input.length(); i++) {
       new_input[i] = (int) input.charAt(i);
