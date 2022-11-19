@@ -5,7 +5,7 @@ for /L %%x in (1, 1, 9) do (
   java d0%%x.wes
   echo.
 )
-for /L %%x in (10, 1, 23) do (
+for /L %%x in (10, 1, 24) do (
   echo Day %%x
   echo ------
   java d%%x.wes
