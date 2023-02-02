@@ -1,14 +1,14 @@
 fn solve(file : &str) -> (u32, u32) {
   
   let mut input = std::fs::read_to_string(file).expect("Fatal Elf Error");
-  input = input.replace("\r", "");
+  input = input.replace('\r', "");
 
   let mut elves = Vec::new();
 
   for elf in input.split("\n\n") {
     let mut elf_total: u32 = 0;
-    for weight in elf.split("\n") {
-      if weight!= "" {
+    for weight in elf.split('\n') {
+      if !weight.is_empty() {
         let int_weight: u32 = weight.parse().unwrap();
         elf_total += int_weight;
        }
@@ -22,8 +22,18 @@ fn solve(file : &str) -> (u32, u32) {
 }
 
 fn main() {
-  let res = solve("../../../inputs/d01-input.txt");
+  let res = solve("../inputs/d01-input.txt");
   println!("Part 1: {}", res.0);
   println!("Part 2: {}", res.1);
 }
 
+#[cfg(test)]
+mod tests {
+  use crate::*;
+  #[test]
+  fn test_day1() {
+    let res = solve("../inputs/d01-test.txt");
+    assert_eq!(res.0, 24000);
+    assert_eq!(res.1, 45000);
+  }
+}
