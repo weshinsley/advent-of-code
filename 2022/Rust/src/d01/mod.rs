@@ -22,8 +22,6 @@ fn _solve(file : &str) -> (u32, u32) {
     (elves[0], elves[0] + elves[1] + elves[2])
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use crate::*;
