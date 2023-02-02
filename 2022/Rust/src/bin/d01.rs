@@ -1,11 +1,12 @@
-fn solve(file : &str) -> (u32, u32) {
-  
-  let mut input = std::fs::read_to_string(file).expect("Fatal Elf Error");
-  input = input.replace('\r', "");
+fn read_file_contents(file: &str) -> String {
+    let input = std::fs::read_to_string(file).expect("Fatal Error");
+    input.replace('\r', "")
+}
 
+fn solve(file : &str) -> (u32, u32) {
   let mut elves = Vec::new();
 
-  for elf in input.split("\n\n") {
+  for elf in read_file_contents(file).split("\n\n") {
     let mut elf_total: u32 = 0;
     for weight in elf.split('\n') {
       if !weight.is_empty() {
