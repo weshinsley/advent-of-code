@@ -6,7 +6,7 @@ pub fn solve() -> (u32, u32) {
 
 fn _solve(file : &str) -> (u32, u32) {
     static LOOKUP: [usize; 18] = [4, 1, 7, 8, 5, 2, 3, 9, 6,
-                                  3, 1, 2, 4, 5, 6, 8, 9 ,7];
+                                  3, 1, 2, 4, 5, 6, 8, 9, 7];
     static AX: [usize; 2] = [65, 88];
     static MUL: [usize; 2] = [1, 3];
 
