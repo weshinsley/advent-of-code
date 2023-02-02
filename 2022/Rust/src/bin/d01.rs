@@ -1,6 +1,8 @@
 fn solve(file : &str) -> (u32, u32) {
   
-  let input = std::fs::read_to_string(file).expect("Fatal Elf Error");
+  let mut input = std::fs::read_to_string(file).expect("Fatal Elf Error");
+  input = input.replace("\r", "");
+
   let mut elves = Vec::new();
 
   for elf in input.split("\n\n") {
