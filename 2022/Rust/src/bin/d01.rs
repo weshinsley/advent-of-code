@@ -10,8 +10,7 @@ fn solve(file : &str) -> (u32, u32) {
     let mut elf_total: u32 = 0;
     for weight in elf.split('\n') {
       if !weight.is_empty() {
-        let int_weight: u32 = weight.parse().unwrap();
-        elf_total += int_weight;
+        elf_total += weight.parse::<u32>().unwrap();
        }
     }
     elves.push(elf_total);
