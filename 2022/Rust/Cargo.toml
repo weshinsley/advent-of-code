@@ -1,5 +1,5 @@
 [package]
-name = "aoc22-rust"
+name = "aoc22_rust"
 version = "0.1.0"
 edition = "2021"
 
