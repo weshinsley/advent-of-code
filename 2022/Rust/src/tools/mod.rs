@@ -3,7 +3,6 @@ pub fn read_file_contents(file: &str) -> String {
     input.replace('\r', "")
 }
 
-pub fn print_day(res : (u32, u32)) {
-    println!("Part 1: {}", res.0);
-    println!("Part 2: {}", res.1);
+pub fn print_day(day : u32, res : (u32, u32)) {
+    println!("Day {}:\t{}\t{}", day, res.0, res.1);
 }
