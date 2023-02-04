@@ -1,3 +1,5 @@
+extern crate core;
+
 mod tools;
 mod d01;
 mod d02;

@@ -1,7 +1,7 @@
 use crate::tools;
 
 pub fn solve() -> (u32, u32) {
-    _solve("../inputs/d01-input.txt")
+    _solve(&tools::find_input_path("01"))
 }
 
 fn _solve(file : &str) -> (u32, u32) {
