@@ -24,6 +24,20 @@ pub fn read_file_contents(file: &str) -> String {
     input.replace('\r', "")
 }
 
+pub fn read_file_contents_as_char_grid(file: &str) -> Vec<Vec<char>> {
+    let strings = read_file_contents(file);
+    let mut res = Vec::new();
+    for line in strings.split('\n') {
+        let line_chars = line.chars().collect();
+        res.push(line_chars);
+    }
+    res
+}
+
 pub fn print_day(day : u32, res : (u32, u32)) {
+    println!("Day {}:\t{}\t{}", day, res.0, res.1);
+}
+
+pub fn print_day_str(day : u32, res : (String, String))  {
     println!("Day {}:\t{}\t{}", day, res.0, res.1);
 }
