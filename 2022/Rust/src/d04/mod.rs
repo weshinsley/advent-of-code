@@ -26,10 +26,7 @@ pub fn _solve(data : String) -> (u32, u32) {
             p1 += 1;
             p2 += 1;
 
-        } else if (ints[0] >= ints[2]) && (ints[0] <= ints[3]) ||
-                  (ints[1] >= ints[2]) && (ints[1] <= ints[3]) ||
-                  (ints[2] >= ints[0]) && (ints[2] <= ints[1]) ||
-                  (ints[3] >= ints[0]) && (ints[3] <= ints[1]) {
+        } else if (ints[0] <= ints[3]) && (ints[1] >= ints[2]) {
             p2 += 1;
         }
     }
