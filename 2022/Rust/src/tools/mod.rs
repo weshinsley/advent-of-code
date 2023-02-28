@@ -34,6 +34,22 @@ pub fn read_file_contents_as_char_grid(file: &str) -> Vec<Vec<char>> {
     res
 }
 
+pub fn read_file_contents_as_u8_grid(file: &str) -> Vec<Vec<u8>> {
+    let strings = read_file_contents(file);
+    let mut res = Vec::new();
+    for line in strings.split('\n') {
+        if line.is_empty() {
+            continue;
+        }
+        let mut line_ints = Vec::new();
+        for ch in line.chars() {
+            line_ints.push(u8::try_from(ch.to_digit(10).unwrap()).unwrap());
+        }
+        res.push(line_ints);
+    }
+    res
+}
+
 pub fn print_day(day : u32, res : (u32, u32)) {
     println!("Day {}:\t{}\t{}", day, res.0, res.1);
 }

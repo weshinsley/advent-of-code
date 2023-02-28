@@ -8,6 +8,7 @@ mod d04;
 mod d05;
 mod d06;
 mod d07;
+mod d08;
 
 fn main() {
   tools::print_day(1, d01::solve());
@@ -17,6 +18,5 @@ fn main() {
   tools::print_day_str(5, d05::solve());
   tools::print_day(6, d06::solve());
   tools::print_day(7, d07::solve());
+  tools::print_day(8, d08::solve());
 }
-
-
