@@ -5,21 +5,13 @@ fn follow(tail : (i32, i32), head : (i32, i32)) -> (i32, i32) {
     if (tail.0.abs_diff(head.0) <= 1) & (tail.1.abs_diff(head.1) <= 1) {
         return (tail.0, tail.1);
     }
-    if tail.0 == head.0 {
-        return (tail.0, tail.1 + (head.1 - tail.1).signum());
-    }
-    if tail.1 == head.1 {
-        return (tail.0 + (head.0 - tail.0).signum(), tail.1);
-    }
-    (tail.0 + (head.0 - tail.0).signum(), tail.1 + (head.1 - tail.1).signum())
+    (if tail.0 == head.0 { tail.0} else { tail.0 + (head.0 - tail.0).signum() },
+     if tail.1 == head.1 { tail.1} else { tail.1 + (head.1 - tail.1).signum() })
 }
 
-pub fn _solve(input : &Vec<(char, u32)>, knot_count : u32) -> u32 {
-    let mut knots = Vec::new();
-    for _i in 0..knot_count {
-        knots.push((0, 0));
-    }
-    let head = (knot_count - 1) as usize;
+pub fn _solve(input : &Vec<(char, u32)>, knot_count : usize) -> u32 {
+    let mut knots = vec![(0, 0); knot_count];
+    let head = knot_count - 1;
     let mut history = HashSet::new();
     for m in input {
         for _n in 0..m.1 {
