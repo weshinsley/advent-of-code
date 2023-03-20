@@ -16,7 +16,7 @@ fn main() {
     tools::print_day(2, d02::solve());
     tools::print_day(3, d03::solve());
     tools::print_day(4, d04::solve());
-    tools::print_day_str(5, d05::solve());
+    tools::print_day(5, d05::solve());
     tools::print_day(6, d06::solve());
     tools::print_day(7, d07::solve());
     tools::print_day(8, d08::solve());

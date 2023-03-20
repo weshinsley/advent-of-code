@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::fmt::Display;
 
 // cargo test    always uses the root as the working directory.
 // cargo run     uses system current directory, so try to locate input path
@@ -67,10 +68,6 @@ pub fn read_file_contents_as_u8_grid(file: &str) -> Vec<Vec<u8>> {
     res
 }
 
-pub fn print_day(day: u32, res: (u32, u32)) {
-    println!("Day {}:\t{}\t{}", day, res.0, res.1);
-}
-
-pub fn print_day_str(day: u32, res: (String, String)) {
+pub fn print_day(day : u32, res: (impl Display, impl Display)) {
     println!("Day {}:\t{}\t{}", day, res.0, res.1);
 }
