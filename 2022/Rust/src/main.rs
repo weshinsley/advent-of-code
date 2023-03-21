@@ -9,6 +9,7 @@ mod d06;
 mod d07;
 mod d08;
 mod d09;
+mod d10;
 mod tools;
 
 fn main() {
@@ -21,4 +22,5 @@ fn main() {
     tools::print_day(7, d07::solve());
     tools::print_day(8, d08::solve());
     tools::print_day(9, d09::solve());
+    tools::print_day(10, d10::solve());
 }
