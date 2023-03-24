@@ -74,6 +74,7 @@ pub fn _solve(input : &String, rounds : u32, divisor : u32) -> u32 {
         }
     }
     monkey_business.sort();
+    monkey_business.reverse();
     monkey_business[0] * monkey_business[1]
 }
 
