@@ -35,7 +35,6 @@ pub fn parse_single(id_s : &String, holding_s: &String, op_s : &String, div_test
 pub fn parse(input : &String) -> (Vec<Monkey>, u32) {
     let mut monkeys = Vec::new();
     let mut super_mod = 1;
-    let mut line_no = 0;
 
     for monkey in input.split("\n\n") {
         let parts : Vec<String> = monkey.split('\n').map(str::to_string).collect();
@@ -53,7 +52,7 @@ pub fn _solve(input : &String, rounds : u32, divisor : u32) -> u32 {
     for _i in &monkeys.0 {
         monkey_business.push(0);
     }
-    for round in 0..rounds {
+    for _round in 0..rounds {
         for monkey in &mut monkeys.0 {
             monkey_business[monkey.id] += monkey.holding.len() as u32;
             for worry in &monkey.holding {
@@ -67,7 +66,7 @@ pub fn _solve(input : &String, rounds : u32, divisor : u32) -> u32 {
                 if new_worry % monkey.div_test == 0 {
                     monkeys.0[monkey.true_monkey].holding.push(new_worry);
                 } else {
-                    monkeys.0[monkey.false_monkey].holding.push(new_worry)
+                    monkeys.0[monkey.false_monkey].holding.push(new_worry);
                 }
             }
             monkey.holding.clear();
