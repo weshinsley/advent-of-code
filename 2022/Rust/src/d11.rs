@@ -4,15 +4,15 @@ pub enum Op {Add, Mul, Square}
 
 pub struct Monkey {
     pub id : usize,
-    pub holding : Vec<u32>,
+    pub holding : Vec<u64>,
     pub op : Op,
-    pub op_param : u32,
-    pub div_test : u32,
+    pub op_param : u64,
+    pub div_test : u64,
     pub true_monkey : usize,
     pub false_monkey : usize,
 }
 
-pub fn parse_single(id_s : &String, holding_s: &String, op_s : &String, div_test_s : &String,
+pub fn parse_single(id_s : &str, holding_s: &String, op_s : &String, div_test_s : &String,
                     true_monkey_s : &String, false_monkey_s : &String) -> Monkey {
     let mut worries = Vec::new();
     for worry in holding_s[18..(*holding_s).len()].split(", ") {
@@ -23,7 +23,7 @@ pub fn parse_single(id_s : &String, holding_s: &String, op_s : &String, div_test
              holding : worries,
              op : if &op_s[23..24] == "+" { Op::Add }
                   else if &op_s[25..26] == "o" { Op::Square }
-                  else { Op::Add},
+                  else { Op::Mul },
              op_param : if &op_s[25..26] == "o" { 1 }
                         else { op_s[25..(*op_s).len()].parse().unwrap()},
              div_test : div_test_s[21..(*div_test_s).len()].parse().unwrap(),
@@ -32,7 +32,7 @@ pub fn parse_single(id_s : &String, holding_s: &String, op_s : &String, div_test
     }
 }
 
-pub fn parse(input : &String) -> (Vec<Monkey>, u32) {
+pub fn parse(input : &str) -> (Vec<Monkey>, u64) {
     let mut monkeys = Vec::new();
     let mut super_mod = 1;
 
@@ -42,34 +42,38 @@ pub fn parse(input : &String) -> (Vec<Monkey>, u32) {
         super_mod *= new_monkey.div_test;
         monkeys.push(new_monkey);
     }
-    println!("{}", super_mod);
     (monkeys, super_mod)
 }
 
-pub fn _solve(input : &String, rounds : u32, divisor : u32) -> u32 {
+pub fn _solve(input : &str, rounds : u32, divisor : u64) -> u64 {
     let mut monkeys = parse(input);
+    let monkey_count = monkeys.0.len();
     let mut monkey_business = Vec::new();
     for _i in &monkeys.0 {
         monkey_business.push(0);
     }
     for _round in 0..rounds {
-        for monkey in &mut monkeys.0 {
-            monkey_business[monkey.id] += monkey.holding.len() as u32;
-            for worry in &monkey.holding {
-                let mut new_worry = worry / divisor;
-                match monkey.op {
-                    Op::Add => new_worry += monkey.op_param,
-                    Op::Mul => new_worry *= monkey.op_param,
+        for m in 0..monkey_count {
+            monkey_business[monkeys.0[m].id] += monkeys.0[m].holding.len() as u64;
+            let monkey_items = monkeys.0[m].holding.len();
+            for item_no in 0..monkey_items {
+                let mut new_worry = monkeys.0[m].holding[item_no];
+                match monkeys.0[m].op {
+                    Op::Add => new_worry += monkeys.0[m].op_param,
+                    Op::Mul => new_worry *= monkeys.0[m].op_param,
                     Op::Square => new_worry *= new_worry,
                 }
+                new_worry /= divisor;
                 new_worry %= monkeys.1;
-                if new_worry % monkey.div_test == 0 {
-                    monkeys.0[monkey.true_monkey].holding.push(new_worry);
+                if new_worry % monkeys.0[m].div_test == 0 {
+                    let dest = monkeys.0[m].true_monkey;
+                    monkeys.0[dest].holding.push(new_worry);
                 } else {
-                    monkeys.0[monkey.false_monkey].holding.push(new_worry);
+                    let dest = monkeys.0[m].false_monkey;
+                    monkeys.0[dest].holding.push(new_worry);
                 }
             }
-            monkey.holding.clear();
+            monkeys.0[m].holding.clear();
         }
     }
     monkey_business.sort();
@@ -77,7 +81,7 @@ pub fn _solve(input : &String, rounds : u32, divisor : u32) -> u32 {
     monkey_business[0] * monkey_business[1]
 }
 
-pub fn solve() -> (u32, u32) {
+pub fn solve() -> (u64, u64) {
     let input = tools::read_file_contents(&tools::find_input_path("11"));
     (_solve(&input, 20, 3), _solve(&input, 10000, 1))
 }
