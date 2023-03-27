@@ -35,6 +35,23 @@ pub fn read_file_contents_as_char_grid(file: &str) -> Vec<Vec<char>> {
     res
 }
 
+pub fn read_file_contents_as_ascii_grid(file: &str) -> Vec<Vec<u16>> {
+    let strings = read_file_contents(file);
+    let mut res = Vec::new();
+    for line in strings.split('\n') {
+        if line.is_empty() {
+            continue;
+        }
+        let mut new_line = Vec::new();
+        for char in line.chars() {
+            new_line.push(char as u16);
+        }
+        res.push(new_line);
+    }
+    res
+}
+
+
 pub fn read_file_contents_as_tuples(file: &str) -> Vec<(char, u32)> {
     let strings = read_file_contents(file);
     let mut res = Vec::new();
