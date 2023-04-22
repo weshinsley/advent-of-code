@@ -14,6 +14,7 @@ mod d11;
 mod d12;
 mod d13;
 mod d14;
+mod d15;
 mod tools;
 
 fn run_day(i : i8) {
@@ -32,12 +33,13 @@ fn run_day(i : i8) {
         12 => tools::print_day(12, d12::solve()),
         13 => tools::print_day(13, d13::solve()),
         14 => tools::print_day(14, d14::solve()),
+        15 => tools::print_day(15, d15::solve()),
         _ => println!("Day {i} not implemented"),
     }
 }
 fn main() {
 
-    for i in 14..15 {
+    for i in 1..16 {
         run_day(i)
     }
 }
