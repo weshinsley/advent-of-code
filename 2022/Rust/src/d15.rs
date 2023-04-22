@@ -81,19 +81,15 @@ pub fn part1(sensors : &[Sensor], yval : i32) -> u32 {
 }
 
 pub fn check_inside(px : i32, py : i32, sensors : &[Sensor], exclude : usize, range : i32) -> Option<u64> {
-    //println!("Checking {},{}", px, py);
     if px < 0 || px > range || py < 0 || py > range {
         return None;
     }
 
     for (i, sensor) in sensors.iter().enumerate() {
-        //println!("   Is it in {},{} md {}", sensor.x, sensor.y, sensor.md);
         if i == exclude {
-          //  println!("      Ignore - same sensor");
             continue;
         }
         if i32::abs(sensor.x - px) + i32::abs(sensor.y - py) <= sensor.md {
-            //println!("      Yes,  this sensor - abort.");
             return None
         }
     }
