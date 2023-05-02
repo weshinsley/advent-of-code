@@ -249,20 +249,57 @@ pub fn part1(res : Vec<u32>) -> u32 {
 }
 
 pub fn part2(res : Vec<u32>) -> u32 {
+    let max_num = res.len();
+    let big = part1(res.clone());
+
     let mut best = 0;
+    let mut bits = Vec::new();
+
     for i in 0..res.len() {
-        if res[i] == 0 {
+        if res[i] == 0 || res[i] + big < best {
             continue;
         }
-        for j in i..res.len() {
-            if (i & j)  == 0 {
-                let x = res[i] + res[j];
+
+
+        // Find all the numbers bitwise disjoint from i.
+
+        bits.clear();
+
+        let mut bit = 1;
+        let mut cycles = 1;
+        while bit < max_num {
+            if (i & bit) == 0 {
+                bits.push(bit);
+                cycles *= 2;
+            }
+            bit *= 2;
+        }
+
+        // So say max_num is 127 (1111111), and i is 65 (1000001)
+        // then bits will now contain (2,4,8,16,32) - matching the zeroes,
+        // and cycles will be 32, as there are 32 combinations of 5 bits.
+
+        for j in 0..cycles {
+            let mut adj = 0;
+            let mut bit = 1;
+            let mut index = 0;
+            while bit <= j {
+                if (j & bit) >= 1 {
+                    adj += bits[index];
+                }
+                index += 1;
+                bit *= 2;
+            }
+
+            if res[adj] != 0 {
+                let x = res[i] + res[adj];
                 if x > best {
                     best = x;
                 }
             }
         }
     }
+
     best
 }
 
