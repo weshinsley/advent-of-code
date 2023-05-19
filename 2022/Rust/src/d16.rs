@@ -1,7 +1,8 @@
 use crate::tools;
 use std::collections::HashSet;
 use std::collections::HashMap;
-
+//use std::time::{Duration, Instant};
+//use std::thread::sleep;
 // For a named room, find the shortest distance to all other rooms.
 
 pub struct JourneySoFar {
@@ -199,9 +200,12 @@ pub fn dfs(od : &Vec<Vec<usize>>, valves : &Vec<u8>, time : usize) -> Vec<u32> {
 
         let mut state = stack.pop().unwrap();
 
-        if state.tot_pressure > best[state.valve_states] {
-            best[state.valve_states] = state.tot_pressure;
+        if state.tot_pressure < best[state.valve_states] {
+            continue;
         }
+
+        best[state.valve_states] = state.tot_pressure;
+
         let mut new_state = state;
 
         // Decide next place to visit.
@@ -304,9 +308,17 @@ pub fn part2(res : Vec<u32>) -> u32 {
 }
 
 pub fn _solve(input : String) -> (u32, u32) {
+    //let now = Instant::now();
     let (od, valves) = parse(input);
-    (part1(dfs(&od, &valves, 30)), part2(dfs(&od, &valves, 26)))
-}
+    //println!("Init : {}", now.elapsed().as_millis());
+    //let now = Instant::now();
+    let p1 = part1(dfs(&od, &valves, 30));
+    //println!("p1 : {}", now.elapsed().as_millis());
+    //let now = Instant::now();
+    let p2 = part2(dfs(&od, &valves, 26));
+    //println!("p2 : {}", now.elapsed().as_millis());
+    (p1, p2)
+ }
 
 pub fn solve() -> (u32, u32) {
     _solve(tools::read_file_contents(&tools::find_input_path("16")))
