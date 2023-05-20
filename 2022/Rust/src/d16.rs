@@ -153,22 +153,22 @@ pub fn parse(input : String) -> (Vec<Vec<usize>>, Vec<u8>) {
 #[derive(Copy, Clone)]
 pub struct StackState {
     position : usize,
-    time_left : usize,
+    time_left : i32,
     valve_states : usize,
-    tot_pressure : u32,
+    tot_pressure : i32,
     prev_path : i8,
-    potential : u32
+    potential : i32
 }
 
 impl StackState {
-    fn new(position : usize, time_left : usize, valve_states : usize,
-           tot_pressure : u32, prev_path : i8, potential : u32) -> StackState {
+    fn new(position : usize, time_left : i32, valve_states : usize,
+           tot_pressure : i32, prev_path : i8, potential : i32) -> StackState {
 
         StackState { position, time_left, valve_states, tot_pressure, prev_path, potential }
     }
 }
 
-pub fn dfs(od : &Vec<Vec<usize>>, valves : &Vec<u8>, time : usize) -> Vec<u32> {
+pub fn dfs(od : &Vec<Vec<usize>>, valves : &Vec<u8>, time : i32) -> Vec<i32> {
 
     // So this is going to be a fairly grubby depth-first search with some
     // pruning, to avoid having to borrow or clone. Better ways surely must
@@ -177,7 +177,7 @@ pub fn dfs(od : &Vec<Vec<usize>>, valves : &Vec<u8>, time : usize) -> Vec<u32> {
     let pow2 = [1, 2, 4, 8, 16, 32, 64, 128,
                        256, 512, 1024, 2048, 4096, 8192, 16384, 32768];
 
-    let mut any_best = 0;
+    let mut any_best : i32 = 0;
     let mut best = Vec::new();
     let combos = 1 << valves.len();
 
@@ -186,9 +186,9 @@ pub fn dfs(od : &Vec<Vec<usize>>, valves : &Vec<u8>, time : usize) -> Vec<u32> {
     }
 
     let valve_count = od.len() as i8;
-    let mut potential : u32 = 0;
+    let mut potential : i32 = 0;
     for v in valves {
-        potential += (*v) as u32;
+        potential += (*v) as i32;
     }
     let mut stack = Vec::new();
 
@@ -209,7 +209,7 @@ pub fn dfs(od : &Vec<Vec<usize>>, valves : &Vec<u8>, time : usize) -> Vec<u32> {
 
         // If we can't possibly beat our best, then prune.else
 
-        if state.tot_pressure + ((state.time_left as u32) * state.potential) < any_best {
+        if state.tot_pressure + (state.time_left * state.potential) < any_best {
             continue;
         }
 
@@ -217,7 +217,7 @@ pub fn dfs(od : &Vec<Vec<usize>>, valves : &Vec<u8>, time : usize) -> Vec<u32> {
         // First update the state of the current place for backtracking...
 
         state.prev_path += 1;
-        let mut new_time_left = state.time_left as i32 - 1;
+        let mut new_time_left = state.time_left - 1;
 
         while state.prev_path < valve_count {
             if state.valve_states & pow2[state.prev_path as usize] == 0 {
@@ -244,17 +244,17 @@ pub fn dfs(od : &Vec<Vec<usize>>, valves : &Vec<u8>, time : usize) -> Vec<u32> {
 
         stack.push(StackState::new(
             state.prev_path as usize,
-            new_time_left as usize,
+            new_time_left,
             state.valve_states | pow2[state.prev_path as usize],
-            state.tot_pressure + (new_time_left as u32) * (valves[state.prev_path as usize] as u32),
+            state.tot_pressure + (new_time_left * (valves[state.prev_path as usize] as i32)),
             -1,
-            state.potential - (valves[state.prev_path as usize] as u32)));
+            state.potential - (valves[state.prev_path as usize] as i32)));
 
     }
     best
 }
 
-pub fn part1(res : Vec<u32>) -> u32 {
+pub fn part1(res : Vec<i32>) -> i32 {
     let mut max = res[0];
     for num in res.iter().skip(1) {
         if *num > max {
@@ -264,7 +264,7 @@ pub fn part1(res : Vec<u32>) -> u32 {
     max
 }
 
-pub fn part2(res : Vec<u32>) -> u32 {
+pub fn part2(res : Vec<i32>) -> i32 {
     let max_num = res.len();
     let big = part1(res.clone());
 
@@ -328,20 +328,20 @@ pub fn part2(res : Vec<u32>) -> u32 {
     best
 }
 
-pub fn _solve(input : String) -> (u32, u32) {
-  //  let now = Instant::now();
+pub fn _solve(input : String) -> (i32, i32) {
+    //let now = Instant::now();
     let (od, valves) = parse(input);
-//    println!("Init : {}", now.elapsed().as_millis());
-//    let now = Instant::now();
+    //println!("Init : {}", now.elapsed().as_millis());
+    //let now = Instant::now();
     let p1 = part1(dfs(&od, &valves, 30));
-//    println!("p1 : {}", now.elapsed().as_millis());
-//    let now = Instant::now();
+    //println!("p1 : {}", now.elapsed().as_millis());
+    //let now = Instant::now();
     let p2 = part2(dfs(&od, &valves, 26));
-//    println!("p2 : {}", now.elapsed().as_millis());
+    //println!("p2 : {}", now.elapsed().as_millis());
     (p1, p2)
  }
 
-pub fn solve() -> (u32, u32) {
+pub fn solve() -> (i32, i32) {
     _solve(tools::read_file_contents(&tools::find_input_path("16")))
 }
 
