@@ -207,13 +207,6 @@ pub fn dfs(od : &Vec<Vec<usize>>, valves : &Vec<u8>, time : usize) -> Vec<u32> {
 
         let mut state = stack.pop().unwrap();
 
-        if state.tot_pressure > best[state.valve_states] {
-            best[state.valve_states] = state.tot_pressure;
-            if state.tot_pressure > any_best {
-                any_best = state.tot_pressure;
-            }
-        }
-
         // If we can't possibly beat our best, then prune.else
 
         if state.tot_pressure + ((state.time_left as u32) * state.potential) < any_best {
@@ -238,6 +231,12 @@ pub fn dfs(od : &Vec<Vec<usize>>, valves : &Vec<u8>, time : usize) -> Vec<u32> {
         }
 
         if state.prev_path == valve_count {
+            if state.tot_pressure > best[state.valve_states] {
+                best[state.valve_states] = state.tot_pressure;
+                if state.tot_pressure > any_best {
+                    any_best = state.tot_pressure;
+                }
+            }
             continue;
         }
 
@@ -330,7 +329,7 @@ pub fn part2(res : Vec<u32>) -> u32 {
 }
 
 pub fn _solve(input : String) -> (u32, u32) {
-//    let now = Instant::now();
+  //  let now = Instant::now();
     let (od, valves) = parse(input);
 //    println!("Init : {}", now.elapsed().as_millis());
 //    let now = Instant::now();
