@@ -157,13 +157,14 @@ pub struct StackState {
     valve_states : usize,
     tot_pressure : u32,
     prev_path : i8,
+    potential : u32
 }
 
 impl StackState {
     fn new(position : usize, time_left : usize, valve_states : usize,
-           tot_pressure : u32, prev_path : i8) -> StackState {
+           tot_pressure : u32, prev_path : i8, potential : u32) -> StackState {
 
-        StackState { position, time_left, valve_states, tot_pressure, prev_path }
+        StackState { position, time_left, valve_states, tot_pressure, prev_path, potential }
     }
 }
 
@@ -176,6 +177,7 @@ pub fn dfs(od : &Vec<Vec<usize>>, valves : &Vec<u8>, time : usize) -> Vec<u32> {
     let pow2 = [1, 2, 4, 8, 16, 32, 64, 128,
                        256, 512, 1024, 2048, 4096, 8192, 16384, 32768];
 
+    let mut any_best = 0;
     let mut best = Vec::new();
     let combos = 1 << valves.len();
 
@@ -184,13 +186,18 @@ pub fn dfs(od : &Vec<Vec<usize>>, valves : &Vec<u8>, time : usize) -> Vec<u32> {
     }
 
     let valve_count = od.len() as i8;
+    let mut potential : u32 = 0;
+    for v in valves {
+        potential += (*v) as u32;
+    }
     let mut stack = Vec::new();
 
     // Seed the search. We're at position 0 at time 0 (time_left = time).
     // No valves turned on
     // Total pressure = 0, and we've not looked at any other paths from this state yet.
+    // Potential is the sum of all valves - so we can calculate best case leftovers.
 
-    stack.push(StackState::new(0, time, 0, 0, -1));
+    stack.push(StackState::new(0, time, 1, 0, -1, potential));
 
     // The DFS loop...
 
@@ -200,22 +207,32 @@ pub fn dfs(od : &Vec<Vec<usize>>, valves : &Vec<u8>, time : usize) -> Vec<u32> {
 
         let mut state = stack.pop().unwrap();
 
-        if state.tot_pressure < best[state.valve_states] {
-            continue;
+        if state.tot_pressure > best[state.valve_states] {
+            best[state.valve_states] = state.tot_pressure;
+            if state.tot_pressure > any_best {
+                any_best = state.tot_pressure;
+            }
         }
 
-        best[state.valve_states] = state.tot_pressure;
+        // If we can't possibly beat our best, then prune.else
 
-        let mut new_state = state;
+        if state.tot_pressure + ((state.time_left as u32) * state.potential) < any_best {
+            continue;
+        }
 
         // Decide next place to visit.
         // First update the state of the current place for backtracking...
 
         state.prev_path += 1;
+        let mut new_time_left = state.time_left as i32 - 1;
 
         while state.prev_path < valve_count {
             if state.valve_states & pow2[state.prev_path as usize] == 0 {
-                break;
+                let dist = od[state.position][state.prev_path as usize] as i32;
+                if new_time_left > dist {
+                    new_time_left -= dist;
+                    break;
+                }
             }
             state.prev_path += 1;
         }
@@ -226,18 +243,14 @@ pub fn dfs(od : &Vec<Vec<usize>>, valves : &Vec<u8>, time : usize) -> Vec<u32> {
 
         stack.push(state);
 
-        // Work out state for the room we'll move into...
+        stack.push(StackState::new(
+            state.prev_path as usize,
+            new_time_left as usize,
+            state.valve_states | pow2[state.prev_path as usize],
+            state.tot_pressure + (new_time_left as u32) * (valves[state.prev_path as usize] as u32),
+            -1,
+            state.potential - (valves[state.prev_path as usize] as u32)));
 
-        new_state.position = state.prev_path as usize;
-        let new_time_left: i32 = (state.time_left as i32 - 1) - (od[state.position][new_state.position] as i32);
-
-        if new_time_left > 0 {
-            new_state.time_left = new_time_left as usize;
-            new_state.tot_pressure += (new_time_left as u32) * (valves[new_state.position] as u32);
-            new_state.valve_states |= pow2[new_state.position];
-            new_state.prev_path = -1;
-            stack.push(new_state);
-        }
     }
     best
 }
@@ -259,13 +272,20 @@ pub fn part2(res : Vec<u32>) -> u32 {
     let mut best = 0;
     let mut bits = Vec::new();
 
-    for i in 0..res.len() {
-        if res[i] == 0 || res[i] + big < best {
+    // Here, i will be divisible by 2 (ie, LSB unset).
+    // But actually LSB is always set as AA is always visited, so
+    // use res[i+1] as the score, but use i as the bit-value,
+    // so when we find the disjoint options, they will have
+    // LSB set.
+
+    for i in (0..res.len()).step_by(2) {
+        let val = res[i + 1];
+        if val == 0 || val + big < best {
             continue;
         }
 
-
-        // Find all the numbers bitwise disjoint from i.
+        // Find all the numbers bitwise disjoint from i,
+        // ignoring LSB (which is always 1)
 
         bits.clear();
 
@@ -281,9 +301,11 @@ pub fn part2(res : Vec<u32>) -> u32 {
 
         // So say max_num is 127 (1111111), and i is 65 (1000001)
         // then bits will now contain (2,4,8,16,32) - matching the zeroes,
-        // and cycles will be 32, as there are 32 combinations of 5 bits.
+        // and cycles will be 32, as there are 32 combinations of 5 bits -
+        // except that we don't want the LSB to oscillate - we want it to
+        // always be 1. So start at 1, and step=2.
 
-        for j in 0..cycles {
+        for j in (1..cycles).step_by(2) {
             let mut adj = 0;
             let mut bit = 1;
             let mut index = 0;
@@ -296,7 +318,7 @@ pub fn part2(res : Vec<u32>) -> u32 {
             }
 
             if res[adj] != 0 {
-                let x = res[i] + res[adj];
+                let x = val + res[adj];
                 if x > best {
                     best = x;
                 }
@@ -308,15 +330,15 @@ pub fn part2(res : Vec<u32>) -> u32 {
 }
 
 pub fn _solve(input : String) -> (u32, u32) {
-    //let now = Instant::now();
+//    let now = Instant::now();
     let (od, valves) = parse(input);
-    //println!("Init : {}", now.elapsed().as_millis());
-    //let now = Instant::now();
+//    println!("Init : {}", now.elapsed().as_millis());
+//    let now = Instant::now();
     let p1 = part1(dfs(&od, &valves, 30));
-    //println!("p1 : {}", now.elapsed().as_millis());
-    //let now = Instant::now();
+//    println!("p1 : {}", now.elapsed().as_millis());
+//    let now = Instant::now();
     let p2 = part2(dfs(&od, &valves, 26));
-    //println!("p2 : {}", now.elapsed().as_millis());
+//    println!("p2 : {}", now.elapsed().as_millis());
     (p1, p2)
  }
 
