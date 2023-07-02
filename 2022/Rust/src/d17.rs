@@ -2,12 +2,9 @@ use crate::tools;
 
 pub fn part2(tower_heights : Vec<u32>) -> u64 {
     let mut diff_ints = Vec::new();
-    let mut diff_str = String::new();
-    let chars = ['0', '1', '2', '3', '4'];
     for i in 1..tower_heights.len() {
         let diff = tower_heights[i] - tower_heights[i - 1];
         diff_ints.push(diff);
-        diff_str.push(chars[diff as usize]);
     }
 
     let burn_in = 500;
@@ -15,7 +12,6 @@ pub fn part2(tower_heights : Vec<u32>) -> u64 {
     let mut try_start = burn_in + 1;
 
     loop {
-        // Find character that matches 501
         while diff_ints[try_start] != diff_ints[burn_in] {
             try_start += 1;
         }
