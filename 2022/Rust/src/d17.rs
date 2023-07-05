@@ -154,7 +154,6 @@ pub fn _solve(input : String) -> (usize, u64) {
 }
 
 pub fn solve() -> (usize, u64) {
-    //_solve(tools::read_file_contents("../inputs/d17-test.txt"))
     _solve(tools::read_file_contents(&tools::find_input_path("17")))
 }
 
