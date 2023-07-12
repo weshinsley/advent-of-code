@@ -115,7 +115,7 @@ pub fn _run(blueprint : &BluePrint, end_time : u16) -> u16 {
         // Schedule building of geode nodes
 
         if state.obs_robots > 0 {
-            let mut state2 = state.clone();
+            let mut state2 = state;
             while state2.at_end_of_minute < end_time {
                 if state2.obs >= blueprint.geo_costs_obs &&
                     state2.ore >= blueprint.geo_costs_ore {
@@ -134,7 +134,7 @@ pub fn _run(blueprint : &BluePrint, end_time : u16) -> u16 {
         // Schedule building of obsidian nodes
 
         if state.clay_robots > 0 && state.obs_robots < blueprint.geo_costs_obs {
-            let mut state2 = state.clone();
+            let mut state2 = state;
             while state2.at_end_of_minute <= end_time {
                 if state2.ore >= blueprint.obs_costs_ore && state2.clay >= blueprint.obs_costs_clay {
                     state_timestep(&mut state2);
@@ -150,7 +150,7 @@ pub fn _run(blueprint : &BluePrint, end_time : u16) -> u16 {
 
         // Schedule building of clay robots
         if state.clay_robots < blueprint.obs_costs_clay {
-            let mut state2 = state.clone();
+            let mut state2 = state;
             while state2.at_end_of_minute <= end_time {
                 if state2.ore >= blueprint.clay_costs_ore {
                     state_timestep(&mut state2);
@@ -165,7 +165,7 @@ pub fn _run(blueprint : &BluePrint, end_time : u16) -> u16 {
 
         // Schedule building of ore robots
         if state.ore_robots < blueprint.ore_costs_ore + blueprint.clay_costs_ore + blueprint.obs_costs_ore + blueprint.geo_costs_ore {
-            let mut state2 = state.clone();
+            let mut state2 = state;
             while state2.at_end_of_minute < end_time {
                 if state2.ore >= blueprint.ore_costs_ore {
                     state_timestep(&mut state2);
@@ -189,7 +189,7 @@ pub fn _run(blueprint : &BluePrint, end_time : u16) -> u16 {
     best
 }
 
-pub fn run(blueprints : &Vec<BluePrint>, part : u16) -> u16 {
+pub fn run(blueprints : &[BluePrint], part : u16) -> u16 {
     let mut res = if part == 1 { 0 } else { 1 };
     let time = if part == 1 { 24 } else { 32 };
 
