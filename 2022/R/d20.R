@@ -15,7 +15,6 @@ solve <- function(d, iters = 1, key = 1L) {
       d$nxt[d$prv[i]] <- d$nxt[i]
       d$prv[d$nxt[i]] <- d$prv[i]
       moves <- d$val[i] %% (nrow(d) - 1)
-      while (moves < 0) moves <- moves + (ordered.size() -1);
       p <- d$nxt[i]
       while (moves > 0) {
         p <- d$nxt[p]

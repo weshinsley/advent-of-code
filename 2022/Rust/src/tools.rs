@@ -1,5 +1,6 @@
 use std::path::Path;
 use std::fmt::Display;
+use std::str::FromStr;
 
 // cargo test    always uses the root as the working directory.
 // cargo run     uses system current directory, so try to locate input path
@@ -23,6 +24,17 @@ pub fn find_input_path(day_string: &str) -> String {
 pub fn read_file_contents(file: &str) -> String {
     let input = std::fs::read_to_string(file).expect("Fatal Error");
     input.replace('\r', "")
+}
+
+pub fn read_file_contents_as_i64s(file: &str) -> Vec<i64> {
+    let strings = read_file_contents(file);
+    let mut res : Vec<i64> = Vec::new();
+    for line in strings.split('\n') {
+        if !line.is_empty() {
+            res.push(FromStr::from_str(line).unwrap());
+        }
+    }
+    res
 }
 
 pub fn read_file_contents_as_char_grid(file: &str) -> Vec<Vec<char>> {
