@@ -20,6 +20,7 @@ mod d17;
 mod d18;
 mod d19;
 mod d20;
+mod d21;
 mod tools;
 
 fn run_day(i : i8) {
@@ -44,12 +45,13 @@ fn run_day(i : i8) {
         18 => tools::print_day(18, d18::solve()),
 	    19 => tools::print_day(19, d19::solve()),
         20 => tools::print_day(20, d20::solve()),
+        21 => tools::print_day(21, d21::solve()),
         _ => println!("Day {i} not implemented"),
     }
 }
 fn main() {
 
-    for i in 1..=20 {
+    for i in 1..=21 {
         run_day(i)
     }
 }

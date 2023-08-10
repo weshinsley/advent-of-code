@@ -34,7 +34,7 @@ part2 <- function(d) {
     rright <- part1(d, x$arg2)
     if (is.na(rleft)) {
       if (x$op == "+") {
-        next_answer = answer - rright
+      next_answer = answer - rright
       } else if (x$op == "-") {
         next_answer = answer + rright
       } else if (x$op == "/") {
@@ -51,7 +51,7 @@ part2 <- function(d) {
       } else if (x$op == "-") {
         next_answer = rleft - answer
       } else if (x$op == "/") {
-        next_answer = rright / answer
+        next_answer = rleft / answer
       } else if (x$op == "*") {
         next_answer = answer / rleft
       }

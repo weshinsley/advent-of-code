@@ -13,10 +13,10 @@ pub fn run(input : &mut [i64], key : i64, rounds : u16) -> i64 {
     let mut next_index = Vec::new();
     let mut prev_index = Vec::new();
     next_index.push(1);
-    prev_index.push((input.len() - 1) as usize);
+    prev_index.push(input.len() - 1);
     for n in 1..input.len() {
         next_index.push(n + 1);
-        prev_index.push((n - 1) as usize);
+        prev_index.push(n - 1);
     }
 
     next_index[input.len() - 1] = 0;
@@ -26,12 +26,12 @@ pub fn run(input : &mut [i64], key : i64, rounds : u16) -> i64 {
             let steps = input[n] % lenm1;
             next_index[prev_index[n]] = next_index[n];
             prev_index[next_index[n]] = prev_index[n];
-            let mut ptr = next_index[n] as usize;
+            let mut ptr = next_index[n];
             for _x in 0..steps.abs() {
                 if steps < 0 {
-                    ptr = prev_index[ptr] as usize;
+                    ptr = prev_index[ptr];
                 } else {
-                    ptr = next_index[ptr] as usize;
+                    ptr = next_index[ptr];
                 }
             }
 
@@ -43,10 +43,10 @@ pub fn run(input : &mut [i64], key : i64, rounds : u16) -> i64 {
     }
 
     let mut sum : i64 = 0;
-    let mut n = zero_index as usize;
+    let mut n = zero_index;
     for _j in 0..3 {
         for _i in 0..1000 {
-            n = next_index[n] as usize;
+            n = next_index[n];
         }
         sum += input[n];
     }
