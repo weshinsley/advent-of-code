@@ -5,8 +5,13 @@ parse_input <- function(f) {
 }
 
 go <- function(d, min_steps, max_steps, wid = ncol(d), hei = nrow(d)) {
+  dump_state <- function(ii) {
+    message(sprintf("(%s,%s), dir = %s, steps = %s, heat = %s, next = %s",
+                    pq_x[ii], pq_y[ii], pq_d[ii], pq_s[ii], pq_h[ii], pq_n[ii]
+    ))
+  }
   visited <- array(FALSE, c(wid, hei, 4L, max_steps + 1L))
-  pq_capacity <- 100000
+  pq_capacity <- 1000000
   dx <- c(1L, 0L, -1L, 0L)
   dy <- c(0L, 1L, 0L, -1L)
   i <- 1L
@@ -17,18 +22,24 @@ go <- function(d, min_steps, max_steps, wid = ncol(d), hei = nrow(d)) {
   pq_s <- rep(-1L, pq_capacity)
   pq_n <- rep(-1L, pq_capacity)
 
-  # Initialise with first states - top-left, no steps or heat.
+  # Initialise with first two states - top-left, no steps or heat,
+  # going down and left.
 
-  pq_x[1L] <- 1L
-  pq_y[1L] <- 1L
-  pq_d[1L] <- 1L
-  pq_s[1L] <- 0L
-  pq_h[1L] <- 0L
-  pq_n[1L] <- -1L
+  pq_x[c(1L, 2L)] <- 1L
+  pq_y[c(1L, 2L)] <- 1L
+  pq_d[c(1L, 2L)] <- c(1L, 2L)
+  pq_s[c(1L, 2L)] <- 0L
+  pq_h[c(1L, 2L)] <- 0L
+  pq_n[c(1L, 2L)] <- c(2L, -1L)
 
-  next_slot <- 2L
+  next_slot <- 3L
 
   while(i != -1L)  {
+    # Got there?
+
+    if (pq_x[i] == wid && pq_y[i] == hei && pq_s[i] >= min_steps) {
+      return(pq_h[i])
+    }
 
     if (visited[pq_x[i], pq_y[i], pq_d[i], 1L + pq_s[i]]) {
       i <- pq_n[i]
@@ -37,11 +48,6 @@ go <- function(d, min_steps, max_steps, wid = ncol(d), hei = nrow(d)) {
 
     visited[pq_x[i], pq_y[i], pq_d[i], 1L + pq_s[i]] <- TRUE
 
-    # Got there?
-
-    if (pq_x[i] == wid && pq_y[i] == hei && pq_s[i] >= min_steps) {
-      return(pq_h[i])
-    }
 
     # Explore going straight on.
 
@@ -102,9 +108,9 @@ go <- function(d, min_steps, max_steps, wid = ncol(d), hei = nrow(d)) {
                 pq_n[prev] <- next_slot
                 pq_x[next_slot] <- nx
                 pq_y[next_slot] <- ny
+                pq_d[next_slot] <- nd
                 pq_s[next_slot] <- 0L
                 pq_h[next_slot] <- nh
-                pq_d[next_slot] <- nd
                 pq_n[next_slot] <- -1L
                 next_slot <- next_slot + 1L
                 break
