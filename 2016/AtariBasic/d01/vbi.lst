@@ -1,0 +1,292 @@
+mads 2.0.8 build 31 (8 Jan 19)
+Source: C:\Files\Dev\Eclipse\adv1601\vbi.asm
+     1 				; A little VBI (vertical-blank interrupt) code,
+     2 				; to put a couple of players on the screen at
+     3 				; an (x,y) position, with given direction,
+     4 				; so BASIC can get on with passing...
+     5
+     6 				; Some constants
+     7 = 00CB			      DIRECTION  equ 203
+     8 = 00CC			      POS_X      equ 204
+     9 = 00CD			      POS_Y      equ 205
+    10 = 00CE			      OLD_Y      equ 206
+    11 = 00CF			      OLD_DIR    equ 207
+    12 = 0600			      DIGIT_1    equ 1536
+    13 = 0601			      DIGIT_2    equ 1537
+    14 = 0602			      DIGIT_3    equ 1538
+    15 = E45C			      SETVBV     equ $E45C
+    16 = E45F			      SYSVBV     equ $E45F
+    17 = D000			      PM0_X      equ 53248
+    18 = D001			      PM1_X      equ 53249
+    19 = 8000			      DUMMY_P    equ 32768
+    20 = 00FF			      DUMMY_A    equ 255
+    21 = 00D4			      PLOT_RESULT equ 212
+    22 				      
+    23 				      org $9800          ; Start of code - fit between PM 
+    24
+    25 				      ; We need a custom display list, because the answer needs 205 vertical pixels; the normal
+    26 				      ; GR.8 screen is only 192. But there are enough scan lines to stretch a bit.
+    27
+    28 				display_list
+    29 FFFF> 9800-9D7A> 70	      dta 112            ; 8 blank scan line at top. (Usually there would be 3)
+    30 9801 4F 00 70		      dta 79,0,112      ; 64+15 = LMS + mode 15, with screen memory at 28672
+    31 9804 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    32 980E 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    33 9818 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    34 9822 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    35 982C 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    36 9836 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    37 9840 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    38 984A 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    39 9854 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    40 985E 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15,15      ; total 102 mode 15 lines: 102 * 40 = 4080 - less than 54k. (+16 byte pad)
+    41 9869 4F 00 80		      dta 79,0,128                              ; Need another LMS because of 4k boundary
+    42 986C 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    43 9876 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    44 9880 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    45 988A 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    46 9894 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    47 989E 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    48 98A8 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    49 98B2 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    50 98BC 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15
+    51 98C6 0F 0F 0F 0F 0F 0F +       dta 15,15,15,15,15,15,15,15,15,15,15     ; 102 mode 15 lines again, but can't make this one contiguous.
+    52 98D1 4F 00 90		      dta 79,0,144  ; One more LMS for a last few lines.
+    53 98D4 0F 0F 0F		      dta 15,15,15  ; 4 more lines = 208 total.
+    54 98D7 41 00 98		      dta 65,$0,$98  ; Vwait and JMP to start of DList. 
+    55
+    56 				; Total bytes in Display list: 218
+    57
+    58 				; Now some lookups, for a given Y (0-207), what's the display list position?
+    59 98DA			y_loc_msb
+    60 98DA 70 70 70 70 70 70 +       dta 112,112,112,112,112,112,112,113,113,113,113,113,113,114,114,114,114,114,114,114,115,115,115,115,115,115,116,116,116,116,116,116
+    61 98FA 75 75 75 75 75 75 +       dta 117,117,117,117,117,117,117,118,118,118,118,118,118,119,119,119,119,119,119,119,120,120,120,120,120,120,121,121,121,121,121,121
+    62 991A 7A 7A 7A 7A 7A 7A +       dta 122,122,122,122,122,122,122,123,123,123,123,123,123,124,124,124,124,124,124,124,125,125,125,125,125,125,126,126,126,126,126,126
+    63 993A 7F 7F 7F 7F 7F 7F	      dta 127,127,127,127,127,127
+    64 				      
+    65 9940 80 80 80 80 80 80 +       dta 128,128,128,128,128,128,128,129,129,129,129,129,129,130,130,130,130,130,130,130,131,131,131,131,131,131,132,132,132,132,132,132
+    66 9960 85 85 85 85 85 85 +       dta 133,133,133,133,133,133,133,134,134,134,134,134,134,135,135,135,135,135,135,135,136,136,136,136,136,136,137,137,137,137,137,137
+    67 9980 8A 8A 8A 8A 8A 8A +       dta 138,138,138,138,138,138,138,139,139,139,139,139,139,140,140,140,140,140,140,140,141,141,141,141,141,141,142,142,142,142,142,142
+    68 99A0 8F 8F 8F 8F 8F 8F	      dta 143,143,143,143,143,143
+    69 				      
+    70 99A6 90 90 90 90		      dta 144,144,144,144
+    71 				       
+    72 99AA			y_loc_lsb
+    73 99AA 00 28 50 78 A0 C8 +       dta 0,40,80,120,160,200,240,24,64,104,144,184,224,8,48,88,128,168,208,248,32,72,112,152,192,232,16,56,96,136,176,216
+    74 99CA 00 28 50 78 A0 C8 +       dta 0,40,80,120,160,200,240,24,64,104,144,184,224,8,48,88,128,168,208,248,32,72,112,152,192,232,16,56,96,136,176,216
+    75 99EA 00 28 50 78 A0 C8 +       dta 0,40,80,120,160,200,240,24,64,104,144,184,224,8,48,88,128,168,208,248,32,72,112,152,192,232,16,56,96,136,176,216
+    76 9A0A 00 28 50 78 A0 C8	      dta 0,40,80,120,160,200
+    77 				      
+    78 9A10 00 28 50 78 A0 C8 +       dta 0,40,80,120,160,200,240,24,64,104,144,184,224,8,48,88,128,168,208,248,32,72,112,152,192,232,16,56,96,136,176,216
+    79 9A30 00 28 50 78 A0 C8 +       dta 0,40,80,120,160,200,240,24,64,104,144,184,224,8,48,88,128,168,208,248,32,72,112,152,192,232,16,56,96,136,176,216
+    80 9A50 00 28 50 78 A0 C8 +       dta 0,40,80,120,160,200,240,24,64,104,144,184,224,8,48,88,128,168,208,248,32,72,112,152,192,232,16,56,96,136,176,216
+    81 9A70 00 28 50 78 A0 C8	      dta 0,40,80,120,160,200
+    82 9A76 00 28 50 78		      dta 0,40,80,120
+    83 				      
+    84 9A7A			x_loc_byte
+    85 9A7A 08 08 08 08 08 08 +       dta 8,8,8,8,8,8,8,8,9,9,9,9,9,9,9,9,10,10,10,10,10,10,10,10,11,11,11,11,11,11,11,11,12,12,12,12,12,12,12,12
+    86 9AA2 0D 0D 0D 0D 0D 0D +       dta 13,13,13,13,13,13,13,13,14,14,14,14,14,14,14,14,15,15,15,15,15,15,15,15,16,16,16,16,16,16,16,16,17,17,17,17,17,17,17,17
+    87 9ACA 12 12 12 12 12 12 +       dta 18,18,18,18,18,18,18,18,19,19,19,19,19,19,19,19,20,20,20,20,20,20,20,20,21,21,21,21,21,21,21,21,22,22,22,22,22,22,22,22
+    88 9AF2 17 17 17 17 17 17 +       dta 23,23,23,23,23,23,23,23,24,24,24,24,24,24,24,24,25,25,25,25,25,25,25,25,26,26,26,26,26,26,26,26,27,27,27,27,27,27,27,27
+    89 9B1A 1C 1C 1C 1C 1C 1C +       dta 28,28,28,28,28,28,28,28,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30,31,31,31,31,31,31,31,31,32,32,32,32,32,32,32,32
+    90 9B42 21 21 21 21 21 21 +       dta 33,33,33,33,33,33,33,33
+    91 				      
+    92 9B4A			x_loc_bit
+    93 9B4A 80 40 20 10 08 04 +       dta 128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1 
+    94 9B72 80 40 20 10 08 04 +       dta 128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1 
+    95 9B9A 80 40 20 10 08 04 +       dta 128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1    
+    96 9BC2 80 40 20 10 08 04 +       dta 128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1 
+    97 9BEA 80 40 20 10 08 04 +       dta 128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1,128,64,32,16,8,4,2,1
+    98 9C12 80 40 20 10 08 04 +       dta 128,64,32,16,8,4,2,1 
+    99
+   100
+   101 9C1A			plot_func
+   102 9C1A 68			      pla     ; Always need first PLA
+   103 9C1B 68			      pla     ; Pull off stack y-MSB first (which will be zero for Y)
+   104 9C1C 68			      pla     ; Pull off stack y-LSB.
+   105 9C1D AA			      tax     ; x = a
+   106 9C1E BD DA 98		      lda y_loc_msb, x   ; a = y_loc_msb[x]
+   107 9C21 8D 4D 9C		      sta read_pix_y + 2   ; Overwrite placeholder
+   108 9C24 8D 65 9C		      sta write_pix_y + 2
+   109 9C27 BD AA 99		      lda y_loc_lsb, x   ; a = y_loc_lsb[x]
+   110 9C2A 8D 4C 9C		      sta read_pix_y + 1   ; Overwrite placeholder
+   111 9C2D 8D 64 9C		      sta write_pix_y + 1
+   112 9C30 68			      pla     ; MSB of X always zero)
+   113 9C31 68			      pla     ; LSB of X
+   114 9C32 AA			      tax
+   115 9C33 BD 7A 9A		      lda x_loc_byte, x   ; a = x_loc_byte[x]
+   116 9C36 8D 4A 9C		      sta read_byte_x + 1 ; Ovewrwrite placeholder
+   117 9C39 8D 62 9C		      sta write_byte_x + 1
+   118 9C3C BD 4A 9B		      lda x_loc_bit, x   ; a = x_loc_bit[x]
+   119 9C3F 8D 50 9C		      sta read_bit_x + 1 ; Overwrite placeholder
+   120 9C42 8D 60 9C		      sta write_bit_x + 1
+   121 9C45 A9 00		      lda #0
+   122 9C47 85 D5		      sta PLOT_RESULT + 1
+   123 				      
+   124 				      
+   125 9C49			read_byte_x      
+   126 9C49 A2 00		      ldx #0             ; X offset placeholder
+   127 9C4B			read_pix_y               ; The next two placeholders are overwritten
+   128 9C4B BD 00 80		      lda DUMMY_P,X      ; Look in screen memry
+   129 9C4E AA			      tax
+   130 9C4F			read_bit_x               ; Save original for later
+   131 9C4F 29 FF		      and #DUMMY_A       ; Filter bit for the pixel we're about to plot.
+   132 9C51 C9 00		      cmp #0             ; Is it zero?
+   133 9C53 F0 05		      beq empty_pix      ; If so, it's empty... return 0
+   134 9C55 A9 01		      lda #1             ; Otherwise it's one...
+   135 9C57 85 D4		      sta PLOT_RESULT    ; Return the result
+   136 9C59 60			      rts                ; And we're done,.
+   137 9C5A			empty_pix                ; If it wasn't already plotted,
+   138 9C5A A9 00		      lda #0
+   139 9C5C 85 D4		      sta PLOT_RESULT    ; Set return (0 or 1)
+   140 9C5E 8A			      txa                ; Back to the original value 
+   141 9C5F			write_bit_x
+   142 9C5F 09 FF		      ora #DUMMY_A       ; OR with the bit
+   143 9C61			write_byte_x
+   144 9C61 A2 00		      ldx #0             ; Placeholder for x
+   145 9C63			write_pix_y
+   146 9C63 9D 00 80		      sta DUMMY_P,X      ; Placeholder for y   
+   147 9C66 60			      rts                ; Done.
+   148
+   149 				; Setup VBI
+   150 				     
+   151 9C67 68			      pla
+   152 9C68 68			      pla
+   153 9C69 68			      pla
+   154 9C6A AA			      tax
+   155 9C6B 8E EA 9C		      stx wipe+2
+   156 9C6E 8E FF 9C		      stx p1+2
+   157 9C71 8E 0E 9D		      stx p3+2
+   158 9C74 8E 1D 9D		      stx p5+2
+   159 9C77 8E 90 9C		      stx w1+2
+   160 9C7A E8			      inx
+   161 9C7B 8E ED 9C		      stx wipe+5
+   162 9C7E 8E 06 9D		      stx p2+2
+   163 9C81 8E 15 9D		      stx p4+2
+   164 9C84 8E 93 9C		      stx w2+2
+   165 9C87 8E 24 9D		      stx p6+2
+   166 				      
+   167 9C8A A9 00		      lda #0
+   168 9C8C A2 00		      ldx #0
+   169 9C8E			w1
+   170 9C8E 9D 00 80		      sta DUMMY_P,X
+   171 9C91			w2
+   172 9C91 9D 00 80		      sta DUMMY_P,X
+   173 9C94 E8			      inx
+   174 9C95 E0 FF		      cpx #255
+   175 9C97 D0 F5		      bne w1
+   176 9C99 85 CB		      sta DIRECTION
+   177 9C9B 85 CC		      sta POS_X
+   178 9C9D 85 CD		      sta POS_Y
+   179 9C9F 85 CE		      sta OLD_Y
+   180 				      
+   181 9CA1 A9 70		      lda #112
+   182 9CA3 8D AF 9C		      sta clear_mem + 2
+   183 9CA6 A9 00		      lda #0
+   184 9CA8 8D AE 9C		      sta clear_mem + 1
+   185 9CAB A2 00		      ldx #0
+   186 9CAD			clear_mem
+   187 9CAD 9D 00 80		      sta DUMMY_P,X
+   188 9CB0 E8			      inx
+   189 9CB1 E0 00		      cpx #0
+   190 9CB3 D0 F8		      bne clear_mem
+   191 9CB5 AC AF 9C		      ldy clear_mem + 2
+   192 9CB8 C8			      iny
+   193 9CB9 C0 91		      cpy #145
+   194 9CBB F0 06		      beq end_setup
+   195 9CBD 8C AF 9C		      sty clear_mem + 2
+   196 9CC0 4C AD 9C		      jmp clear_mem  
+   197 9CC3			end_setup
+   198 9CC3 A9 06		      lda #6
+   199 9CC5 A2 9C		      ldx #vbi/256
+   200 9CC7 A0 CD		      ldy #vbi&255
+   201 9CC9 20 5C E4		      jsr SETVBV
+   202 9CCC			skip_setup_vbi
+   203 9CCC 60			      rts
+   204 				      
+   205 9CCD 8D 5B 9D		vbi   sta restore + 1
+   206 9CD0 8E 5D 9D		      stx restore + 3
+   207 9CD3 8C 5F 9D		      sty restore + 5
+   208 				      
+   209 9CD6 A5 CC		      lda POS_X
+   210 9CD8 8D 00 D0		      sta 53248
+   211 9CDB 8D 01 D0		      sta 53249
+   212 9CDE A4 CE		      ldy OLD_Y
+   213 9CE0 C4 CD		      cpy POS_Y
+   214 9CE2 F0 14		      beq plot
+   215 				      
+   216 9CE4 A9 00		      lda #0
+   217 9CE6 A2 03		      ldx #3
+   218 9CE8			wipe
+   219 9CE8 99 00 80		      sta DUMMY_P,Y
+   220 9CEB 99 00 80		      sta DUMMY_P,Y
+   221 9CEE C8			      iny
+   222 9CEF CA			      dex
+   223 9CF0 E0 00		      cpx #0
+   224 9CF2 D0 F4		      bne wipe
+   225 				      
+   226 9CF4 A4 CD		      ldy POS_Y
+   227 9CF6 84 CE		      sty OLD_Y
+   228
+   229 9CF8			plot
+   230 9CF8 A6 CB		      ldx DIRECTION 
+   231 9CFA BD 63 9D		      lda pmdata,X
+   232 9CFD 99 00 80		p1    sta DUMMY_P,Y
+   233 9D00 E8			      inx
+   234 9D01 BD 63 9D		      lda pmdata,X
+   235 9D04 99 00 80		p2    sta DUMMY_P,Y
+   236 9D07 E8			      inx
+   237 9D08 C8			      iny 
+   238 9D09 BD 63 9D		      lda pmdata,X
+   239 9D0C 99 00 80		p3    sta DUMMY_P,Y
+   240 9D0F E8			      inx
+   241 9D10 BD 63 9D		      lda pmdata,X
+   242 9D13 99 00 80		p4    sta DUMMY_P,Y
+   243 9D16 E8			      inx
+   244 9D17 C8			      iny 
+   245 9D18 BD 63 9D		      lda pmdata,X
+   246 9D1B 99 00 80		p5    sta DUMMY_P,Y
+   247 9D1E E8			      inx
+   248 9D1F BD 63 9D		      lda pmdata,X
+   249 9D22 99 00 80		p6    sta DUMMY_P,Y
+   250
+   251 				; Write the three digits in (1536,1537,1538) to top left.
+   252
+   253 9D25 A0 00		      ldy #0           ; for x = 0 to 2 - each of the three digits in 1536,1537,1538
+   254 9D27			digit_loop
+   255 9D27 B9 00 06		      lda 1536,Y       ; Get the number (0-9)
+   256 9D2A 18			      clc              ; Add 16, as that's where '0 is in the chracter set
+   257 9D2B 69 10		      adc #16
+   258 9D2D 0A			      asl           ; Multiply by 8, as character bitmaps are 8 bytes
+   259 9D2E 0A			      asl
+   260 9D2F 0A			      asl
+   261 9D30 AA			      tax
+   262 				      
+   263 9D31 BD 01 E0		      lda 57345,x     ; Copy middle 6 bytes (ignore top/bottom margin) 
+   264 9D34 99 00 70		      sta 28672,y
+   265 9D37 BD 02 E0		      lda 57346,x
+   266 9D3A 99 28 70		      sta 28712,y
+   267 9D3D BD 03 E0		      lda 57347,x
+   268 9D40 99 50 70		      sta 28752,y
+   269 9D43 BD 04 E0		      lda 57348,x
+   270 9D46 99 78 70		      sta 28792,y
+   271 9D49 BD 05 E0		      lda 57349,x
+   272 9D4C 99 A0 70		      sta 28832,y
+   273 9D4F BD 06 E0		      lda 57350,x
+   274 9D52 99 C8 70		      sta 28872,y
+   275 9D55 C8			      iny
+   276 9D56 C0 03		      cpy #3
+   277 9D58 D0 CD		      bne digit_loop
+   278 				       
+   279 				      
+   280 9D5A			restore
+   281 9D5A A9 00		      lda #0
+   282 9D5C A2 00		      ldx #0
+   283 9D5E A0 00		      ldy #0
+   284 9D60 4C 5F E4		      jmp SYSVBV
+   285 				     
+   286 9D63			pmdata
+   287 9D63 02 00 05 02 00 05	      dta 2,0,5,2,0,5
+   288 9D69 02 04 01 02 02 04	      dta 2,4,1,2,2,4
+   289 9D6F 00 05 05 02 02 00	      dta 0,5,5,2,2,0
+   290 9D75 02 01 04 02 02 01	      dta 2,1,4,2,2,1 

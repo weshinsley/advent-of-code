@@ -1,0 +1,211 @@
+mads 2.0.8 build 31 (8 Jan 19)
+Source: C:\Files\Dev\Eclipse\adv1618\code.asm
+     1 				; Advent of Code 2016, Day 18, Atari asm (6502)
+     2
+     3 = 00CB			      TEN_COUNTER equ 203      ; Do iterations in batches of 10.
+     4 = 00CF			      TOTAL equ 207            ; LSB of the total. 206,205,204 are the increasing 3 bytes.
+     5 = 005E			      TRAP_CH       equ '^'    ; ASCII #96
+     6 = 002E			      SAFE_CH       equ '.'    ; ASCII #46
+     7 				      
+     8 = 0001			      ITER_LOOP_MSB equ 1      ; These are really placeholders of the right size
+     9 = 0001			      ITER_LOOP_LSB equ 1      ; to make sure the compiler uses the right opcode 
+    10 = 0064			      STR_LEN       equ 100    ; (single-byte for zero-page <256, or
+    11 = 0063			      STR_LEN_M1    equ 99     ; LSB MSB for addresses above 255)
+    12 = 0600			      STR_IN        equ 1536   ; But actual values will come from the initialisation
+    13 = 0601			      STR_IN_P1     equ 1537   
+    14 = 0602			      STR_IN_P2     equ 1538
+    15 = 0666			      STR_OUT       equ 1638
+    16 = 0667			      STR_OUT_P1    equ 1639
+    17 = 0001			      ZERO_FLAG     equ 1
+    18 				      
+    19 				      org $6000                ; Start of code - compiler directive, not 6502.
+    20 				 
+    21 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    22 				;; Initialisation - Sort out params ;;
+    23 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    24
+    25 FFFF> 6000-6100> 68	      pla                     ; Get arg count
+    26 6001 68			      pla                     ; MSB of input string
+    27 6002 8D 8A 60		      sta first_loop + 2
+    28 6005 8D 9F 60		      sta init_str + 2        ; Overwrite MSB in all the places we read data.
+    29 6008 8D AA 60		      sta digit1 + 2
+    30 600B 8D B3 60		      sta digit2 + 2
+    31 600E 8D FD 60		      sta copy_to + 2
+    32 6011 68			      pla                     ; LSB of input string
+    33 6012 AA			      tax                     ; Use X, (because we can INX and DEX)
+    34 6013 8E 9E 60		      stx init_str + 1        ; Put LSB-1 as initial "first digit"
+    35 6016 8E FC 60		      stx copy_to + 1
+    36 6019 8E 89 60		      stx first_loop + 1
+    37 601C E8			      inx
+    38 601D 8E A9 60		      stx digit1 + 1          ; LSB is initial "second digit"
+    39 6020 E8			      inx
+    40 6021 8E B2 60		      stx digit2 + 1          ; LSB+1 is initial "third digit"
+    41 6024 68			      pla                     ; Skip MSB
+    42 6025 68			      pla                     ; size (including padding)
+    43 6026 8D F2 60		      sta copy_back + 1
+    44 6029 AA			      tax
+    45 602A CA			      dex
+    46 602B 8E 93 60		      stx non_safe + 2        ; For very-first case, counting safe.
+    47 602E CA			      dex
+    48 602F 8E E3 60		      stx end_inner_loop + 1  ; Put length-2 as the end condition for inner loop.
+    49 6032 68			      pla                     ; MSB of buffer
+    50 6033 8D E0 60		      sta assign_status + 2   ; Overwrite in the place where we write
+    51 6036 8D FA 60		      sta copy_from + 2 
+    52 6039 68			      pla                     ; LSB of buffer
+    53 603A 8D F9 60		      sta copy_from + 1
+    54 603D AA			      tax
+    55 603E E8			      inx
+    56 603F 8E DF 60		      stx assign_status + 1   ; Overwrite [x+1] first.
+    57 6042 68			      pla                     ; MSB of steps/10
+    58 6043 8D 64 60		      sta step_loop_msb + 1
+    59 6046 68			      pla                     ; LSB of steps/10
+    60 6047 8D 5A 60		      sta step_loop_lsb + 1
+    61 				      
+    62 604A A9 00		      lda #0                  ; Initialise 207,206,205,204 = 0
+    63 604C 85 CF		      sta TOTAL               ; These will be the 32-bit counter.
+    64 604E 85 CE		      sta TOTAL - 1
+    65 6050 85 CD		      sta TOTAL - 2
+    66 6052 85 CC		      sta TOTAL - 3
+    67 				 
+    68 6054 A9 01		      lda #1                 
+    69 6056 8D 7C 60		      sta very_first + 1      ; And set the "very first time" flag for first row.
+    70
+    71 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    72 				; Outer iteration loop                                                                 ;
+    73 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    74
+    75 6059 A2 01		step_loop_lsb    ldx #ITER_LOOP_LSB       
+    76 605B CA			                 dex                     ; iters_LSB--
+    77 605C 8E 5A 60		                 stx step_loop_lsb + 1      
+    78 605F E0 FF		                 cpx #255                ;   if (iters_LSB!=255)    ie - no wrap
+    79 6061 D0 0B		                 bne cont_main_loop      ;     do the next part
+    80 6063 A2 01		step_loop_msb    ldx #ITER_LOOP_MSB      ;   else
+    81 6065 CA			                 dex                     ;     iters_MSB--
+    82 6066 8E 64 60		                 stx step_loop_msb + 1    
+    83 6069 E0 FF		                 cpx #255                ;     if (iters_MSB!=255)   no wrap
+    84 606B D0 01		                 bne cont_main_loop      ;     do the next part
+    85 606D 60			                 rts                     ;     else exit
+    86
+    87 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    88 				; Batch of 10 iterations loop                                                          ;
+    89 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    90
+    91
+    92
+    93 606E A9 0A		cont_main_loop   lda #10                 ; ten_counter = 10 (Hence, 400000 = 10 * 40000 so can use 16-bit)
+    94 6070 85 CB		                 sta TEN_COUNTER         ; Store in 204 - spare bytes in page zero.
+    95
+    96 6072 A6 CB		ten_loop         ldx TEN_COUNTER         
+    97 6074 CA			                 dex                     ; ten_counter --
+    98 6075 86 CB		                 stx TEN_COUNTER
+    99 6077 E0 FF		                 cpx #255                ; if (ten_counter == 255)  - ie, wrap
+   100 6079 F0 DE		                 beq step_loop_lsb       ;   go to outer_loop
+   101
+   102 				    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   103 				    ; Very first time - score initial row                                                  ;
+   104 				    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   105
+   106
+   107 607B A9 01		very_first       lda #ZERO_FLAG          ; Very first case - this only happens once
+   108 607D C9 01		                 cmp #1                  ; if zero_flag != 1
+   109 607F D0 18		                 bne non_zero            ;   carry on with the normal stuff.
+   110 6081 A9 00		                 lda #0
+   111 6083 8D 7C 60		                 sta very_first + 1      ; else zero_flag = 0 - and this never happens again,
+   112 6086 A2 01		                 ldx #1                  ; X = 1
+   113 6088 BD 00 06		first_loop       lda STR_IN, X           ; do {
+   114 608B C9 2E		                 cmp #SAFE_CH            ;   TOTAL += (str[X] == SAFE)
+   115 608D D0 02		                 bne non_safe
+   116 608F E6 CF		                 inc TOTAL              
+   117 6091 E8			non_safe         inx                     ;   X++
+   118 6092 E0 63		                 cpx #STR_LEN_M1         
+   119 6094 D0 F2		                 bne first_loop          ; } while (X != len-1)
+   120 6096 4C 72 60		                 jmp ten_loop            ; this counts as first interation. Go to ten loop.
+   121
+   122 6099			non_zero                                 ; For all other not-very-first cases:
+   123 6099 A2 00		                 ldx #0                  ; X = 0 (Examine [0,1,2] and calculate new value for [1]
+   124 				                                              
+   125 				                                         ; Calculate row score. First few lines are only needed for X=0     
+   126 				    
+   127 				    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   128 				    ; Calculate new string from old                                                        ;
+   129 				    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   130 				    
+   131 				        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   132 				        ; Start-up for first two characters                                                ;
+   133 				        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   134
+   135 609B A0 00		                 ldy #0                  ; Y = 0  
+   136 609D AD 00 06		init_str         lda STR_IN              ; A = str[0]
+   137 60A0 C9 5E		                 cmp #TRAP_CH            
+   138 60A2 D0 04		                 bne digit1              ; if A == safe  
+   139 60A4 C8			                 iny                     ;   y+=4
+   140 60A5 C8			                 iny                     ;   then y = y + 4   (quicker than TAY, CLC, ADC #4, TYA)
+   141 60A6 C8			                 iny
+   142 60A7 C8			                 iny
+   143 60A8 AD 01 06		digit1           lda STR_IN_P1           ; A = str[1]
+   144 60AB C9 5E		                 cmp #TRAP_CH            ; 
+   145 60AD D0 02		                 bne digit2              ; if A == safe
+   146 60AF C8			                 iny                     ;   y+=2
+   147 60B0 C8			                 iny                     ;   
+   148
+   149 				        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   150 				        ; Third character - and all subsequent characters                                  ;
+   151 				        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   152
+   153 60B1 BD 02 06		digit2           lda STR_IN_P2, X        ; A = str[2+x] - we'll jump back to this point for later digits
+   154 60B4 C9 5E		                 cmp #TRAP_CH            ;
+   155 60B6 D0 01		                 bne digit3              ; if A == safe   
+   156 60B8 C8			                 iny                     ;   y++
+   157
+   158 				        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   159 				        ; Decide what new character at X+1 should be                                       ;
+   160 				        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   161
+   162 60B9 C0 06		digit3           cpy #6                  ; "Trap values" are ^^. .^^ ^.. ..^ = 6, 3, 4, 1
+   163 60BB F0 1F		                 beq set_trap
+   164 60BD C0 04		                 cpy #4
+   165 60BF F0 1B		                 beq set_trap            ; if A %in% (6,4,3,1) then IT'S A TRAP!!
+   166 60C1 C0 03		                 cpy #3
+   167 60C3 F0 17		                 beq set_trap
+   168 60C5 C0 01		                 cpy #1 
+   169 60C7 F0 13		                 beq set_trap
+   170 60C9 A9 2E		                 lda #SAFE_CH            ; Else, it's SAFE. A = SAFE_CHAR
+   171 60CB E6 CF		                 inc TOTAL               
+   172 60CD D0 0F		                 bne assign_status       ; TOTAL++  (where total is "32-bit") 
+   173 60CF E6 CE		                 inc TOTAL - 1           ; check wraps for the LSB, LSB-1 and LSB-2
+   174 60D1 D0 0B		                 bne assign_status
+   175 60D3 E6 CD		                 inc TOTAL - 2
+   176 60D5 D0 07		                 bne assign_status
+   177 60D7 E6 CC		                 inc TOTAL - 3
+   178 60D9 4C DE 60		                 jmp assign_status       ; skip over the "IT'S A TRAP BIT"
+   179
+   180 60DC A9 5E		set_trap         lda #TRAP_CH            ; (If it is a TRAP, A = TRAP_CHAR)
+   181
+   182 60DE 9D 67 06		assign_status    sta STR_OUT_P1,X        ; new_str[X+1] = A
+   183 60E1 E8			                 inx                     ; X++
+   184 60E2 E0 63		end_inner_loop   cpx #STR_LEN_M1         ; if X == len-1 
+   185 60E4 F0 08		                 beq done_string         ;   We've done the loop
+   186 60E6 98			                 tya                     ; else 
+   187 60E7 29 03		                 and #3                  ; y = (y & binary 00000011) shl 1     
+   188 60E9 0A			                 asl                     ; (ie, chop off left-most bit, and shift left)
+   189 60EA A8			                 tay                     ; 
+   190 60EB 4C B1 60		                 jmp digit2              ; Now consider the next single digit.
+   191
+   192
+   193 				    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   194 				    ; Copy new string to "old"                                                             ;
+   195 				    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   196 				    
+   197
+   198
+   199 60EE			done_string
+   200 60EE A2 00		                 ldx #0                ; For X = 1 to STR_LEN-1 inclusive
+   201 60F0 E8			copy_loop        inx                   
+   202 60F1 E0 64		copy_back        cpx #STR_LEN          
+   203 60F3 D0 03		                 bne copy_from         ; (it's too far away to beq ten_loop)
+   204 60F5 4C 72 60		                 jmp ten_loop
+   205 60F8 BD 66 06		copy_from        lda STR_OUT,X         ;   str[X] = new_Str[X]
+   206 60FB 9D 00 06		copy_to          sta STR_IN,X          
+   207 60FE 4C F0 60		                 jmp copy_loop         ; Next X
+   208 				                                       ; and then goto ten_loop
+   209 				                                       

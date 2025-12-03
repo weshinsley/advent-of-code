@@ -1,0 +1,1 @@
+0 GRAPHICS 0:? "AoC 2016 Day 23":? "How many eggs":INPUT A: FOR I=A-1 TO 2 STEP -1:A=A*I:NEXT I:? A+(87*70)

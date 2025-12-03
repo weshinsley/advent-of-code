@@ -1,0 +1,30 @@
+0 GRAPHICS 2:? "AoC 2016, Day 25. LOADING":OPEN #1,4,0,"H:INPUT.TXT":DIM C(30,3),S$(3),A$(4),B$(5):TRAP 14:L=1
+1 FOR I=1 TO 3:GET #1,A:S$(I)=CHR$(A):NEXT I:GET #1,A:I=1:J=1:A$="":B$=""
+2 GET #1,A:ON A=10 GOTO 4:IF A<>32 THEN A$(I)=CHR$(A):I=I+1:GOTO 2
+3 GET #1,A:IF A<>10 THEN B$(J)=CHR$(A):J=J+1:GOTO 3
+4 IF S$="cpy" THEN C(L,1)=(2*(A$>="a"))+(B$>="a"):GOTO 9
+5 IF S$="dec" THEN C(L,1)=4+(A$>="a"):GOTO 11
+6 IF S$="inc" THEN C(L,1)=6+(A$>="a"):GOTO 11
+7 IF S$="jnz" THEN C(L,1)=8+(2*(A$>="a"))+(B$>="a"):GOTO 9
+8 IF S$="out" THEN C(L,1)=12+(A$>="a"):GOTO 11
+9 IF B$>="a" THEN C(L,3)=ASC(B$)-96:GOTO 11
+10 C(L,3)=VAL(B$)
+11 IF A$>="a" THEN C(L,2)=ASC(A$)-96:GOTO 13
+12 C(L,2)=VAL(A$)
+13 L=L+1:GOTO 1
+14 CLOSE #1:N=L-1:DIM R(4):R(1)=189:R(2)=0:R(3)=0:R(4)=0:L=1:POKE 752,1:? "Running Assembunny code"
+15 POKE 77,0:GOTO 20+C(L,1)
+20 L=L+1:GOTO 15
+21 R(C(L,3))=C(L,2):L=L+1:GOTO 15
+22 L=L+1:GOTO 15
+23 R(C(L,3))=R(C(L,2)):L=L+1:GOTO 15
+24 L=L+1:GOTO 15
+25 R(C(L,2))=R(C(L,2))-1:L=L+1:GOTO 15
+26 L=L+1:GOTO 15
+27 R(C(L,2))=R(C(L,2))+1:L=L+1:GOTO 15
+28 L=L+(C(L,3)*(C(L,2)<>0))+(C(L,2)=0):GOTO 15
+29 L=L+(R(C(L,3))*(C(L,2)<>0))+(C(L,2)=0):GOTO 15
+30 L=L+(C(L,3)*(R(C(L,2))<>0))+(R(C(L,2))=0):GOTO 15
+31 L=L+(R(C(L,3))*(R(C(L,2))<>0))+(R(C(L,2))=0):GOTO 15
+32 ? #6;C(L,2);:L=L+1:GOTO 15
+33 ? #6;R(C(L,2));:L=L+1:GOTO 15

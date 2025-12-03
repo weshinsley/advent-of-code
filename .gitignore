@@ -13,3 +13,5 @@ __pycache__
 *.o
 input*.txt
 INPUT.TXT
+test*.txt
+TEST.TXT

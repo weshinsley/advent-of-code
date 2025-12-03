@@ -1,0 +1,346 @@
+mads 2.0.8 build 31 (8 Jan 19)
+Source: C:\Files\Dev\Eclipse\adv1620\sort.asm
+     1 				; Advent of Code 2016, Day 20, Atari asm (6502)
+     2 				; Basic code reads/converts the numbers into 4-byte
+     3 				; hexadecimal representation. This code sorts them
+     4 				; in increasing order of the first number in each row.
+     5
+     6 				; Constants and placeholders
+     7 = 0000			DIGIT_3 = 0
+     8 = 0000			DIGIT_2 = 0
+     9 = 0000			DIGIT_1 = 0
+    10 = 0000			DIGIT_0 = 0
+    11 = 0000			END_J_LSB = 0
+    12 = 0000			END_J_MSB = 0
+    13 = 0000			END_I_LSB = 0
+    14 = 0000			END_I_MSB = 0
+    15
+    16 = 00CC			I_LSB = $CC
+    17 = 00CD			I_MSB = $CD
+    18 = 00CE			J_LSB = $CE
+    19 = 00CF			J_MSB = $CF
+    20 = 00D0			BEST_LSB = $D0
+    21 = 00D1			BEST_MSB = $D1
+    22 				 
+    23 				      org $6800                ; Start of code - compiler directive, not 6502.
+    24
+    25 				;;;;;;;;;;;;;;;;;;;;;;;;;;
+    26 				;; Initialisation       ;;
+    27 				;;;;;;;;;;;;;;;;;;;;;;;;;;
+    28 				            
+    29 FFFF> 6800-6A1F> 68	          pla                ; Arg count
+    30 6801 68			          pla                ; msb of start address
+    31 6802 85 CD		          sta I_MSB
+    32 6804 68			          pla                ; lsb of start address
+    33 6805 85 CC		          sta I_LSB
+    34 6807 68			          pla                ; msb of Last entry
+    35 6808 8D DE 68		          sta END_I_M + 1    ; Store in end_i_loop
+    36 680B 8D A9 68		          sta END_J_M + 1    ; and end_j_loop
+    37 680E 68			          pla                ; lsb of last entry
+    38 680F 8D D5 68		          sta END_I_L + 1    ; Store in end_i_loop
+    39 6812 18			          clc
+    40 6813 69 08		          adc #8
+    41 6815 8D A3 68		          sta END_J_L + 1    ; and + 8 for end j_loop - but w want
+    42 6818 90 03		          bcc I_LOOP
+    43 681A EE A9 68		          INC END_J_M + 1
+    44
+    45 				    
+    46 				    
+    47 681D			I_LOOP                   ; We want: for i=address to last-address - 2
+    48 681D A0 00		          ldy #0
+    49 681F B1 CC		          lda (I_LSB),y
+    50 6821 8D 4E 68		          sta COMP_3 + 1  ; Set the four bytes to compare to
+    51 6824 C8			          iny
+    52 6825 B1 CC		          lda (I_LSB),y
+    53 6827 8D 57 68		          sta COMP_2 + 1
+    54 682A C8			          iny
+    55 682B B1 CC		          lda (I_LSB),y
+    56 682D 8D 60 68		          sta COMP_1 + 1
+    57 6830 C8			          iny
+    58 6831 B1 CC		          lda (I_LSB),y
+    59 6833 8D 69 68		          sta COMP_0 + 1
+    60 6836 A5 CD		          lda I_MSB         ; j = i + 8
+    61 6838 85 CF		          sta J_MSB
+    62 683A 85 D1		          sta BEST_MSB
+    63 683C A5 CC		          lda I_LSB
+    64 683E 85 D0		          sta BEST_LSB
+    65 6840 18			          clc
+    66 6841 69 08		          adc #8
+    67 6843 85 CE		          sta J_LSB
+    68 6845 90 02		          bcc J_LOOP
+    69 6847 E6 CF		          inc J_MSB
+    70 				          
+    71 6849			J_LOOP   
+    72 6849 A0 00		          ldy #0
+    73 684B B1 CE		          lda (J_LSB),y
+    74 684D C9 00		COMP_3    cmp #DIGIT_3     ; After this, carry is set if DIGIT_3>=A
+    75 684F 90 1D		          bcc BETTER       ; otherwise, clear if DIGIT_3<A
+    76 6851 D0 3C		          bne END_J_LOOP   ; And if not equal, it must be greater (worse)
+    77 6853 C8			          iny
+    78 6854 B1 CE		          lda (J_LSB),y
+    79 6856 C9 00		COMP_2    cmp #DIGIT_2
+    80 6858 90 14		          bcc BETTER       ; Repeat for other 3 digits.
+    81 685A D0 33		          bne END_J_LOOP
+    82 685C C8			          iny
+    83 685D B1 CE		          lda (J_LSB),y
+    84 685F C9 00		COMP_1    cmp #DIGIT_1
+    85 6861 90 0B		          bcc BETTER
+    86 6863 D0 2A		          bne END_J_LOOP
+    87 6865 C8			          iny
+    88 6866 B1 CE		          lda (J_LSB),y
+    89 6868 C9 00		COMP_0    cmp #DIGIT_0
+    90 686A 90 02		          bcc BETTER
+    91 686C D0 21		          bne END_J_LOOP
+    92 				          
+    93 686E			BETTER
+    94 686E A0 00		          ldy #0
+    95 6870 B1 CE		          lda (J_LSB),y
+    96 6872 8D 4E 68		          sta COMP_3 + 1
+    97 6875 C8			          iny
+    98 6876 B1 CE		          lda (J_LSB),y           ; Replace the four digits 
+    99 6878 8D 57 68		          sta COMP_2 + 1          ; to compare, with this new
+   100 687B C8			          iny                     ; favourite value
+   101 687C B1 CE		          lda (J_LSB),y
+   102 687E 8D 60 68		          sta COMP_1 + 1
+   103 6881 C8			          iny
+   104 6882 B1 CE		          lda (J_LSB),y
+   105 6884 8D 69 68		          sta COMP_0 + 1
+   106 6887 A5 CE		          lda J_LSB              ; And remember index where it 
+   107 6889 85 D0		          sta BEST_LSB           ; came from.
+   108 688B A5 CF		          lda J_MSB
+   109 688D 85 D1		          sta BEST_MSB
+   110 				                 
+   111 688F			END_J_LOOP
+   112 688F A5 14		          lda 20            ; Do some pretty colours while we wait.
+   113 6891 6D 0B D4		          adc 54283         ; (which also lets us know we haven't hung)
+   114 6894 8D 1A D0		          sta 53274
+   115 6897 A5 CE		          lda J_LSB            ; j=j+8
+   116 6899 18			          clc
+   117 689A 69 08		          adc #8
+   118 689C 85 CE		          sta J_LSB
+   119 689E 90 02		          bcc END_J_L
+   120 68A0 E6 CF		          inc J_MSB
+   121
+   122 68A2 C9 00		END_J_L   cmp #END_J_LSB
+   123 68A4 D0 A3		          bne J_LOOP
+   124 68A6 A5 CF		          lda J_MSB         
+   125 68A8 C9 00		END_J_M   cmp #END_J_MSB     ; if j<>$6798, then goto J_LOOP
+   126 68AA D0 9D		          bne J_LOOP         ; (where $6798 is first "out-of-bounds")
+   127
+   128 68AC			END_I_LOOP
+   129 68AC A5 D0		          lda BEST_LSB       ;  J loop is done. 
+   130 68AE C5 CC		          cmp I_LSB          ;  Was the best the first entry anyway?
+   131 68B0 D0 06		          bne SWAP           ;  No. 
+   132 68B2 A5 D1		          lda BEST_MSB
+   133 68B4 C5 CD		          cmp I_MSB
+   134 68B6 F0 11		          beq CONTINUE       ; Or actually,yes.
+   135 68B8			SWAP
+   136 68B8 A0 00		          ldy #0
+   137 68BA B1 CC		SWAP_LOOP lda (I_LSB),Y      ; Swap 8 bytes, between the memory at i,
+   138 68BC AA			          tax                ; and the memory at best.
+   139 68BD B1 D0		          lda (BEST_LSB),Y
+   140 68BF 91 CC		          sta (I_LSB),Y
+   141 68C1 8A			          txa
+   142 68C2 91 D0		          sta (BEST_LSB),Y
+   143 68C4 C8			          iny
+   144 68C5 C0 08		          cpy #8
+   145 68C7 D0 F1		          bne SWAP_LOOP
+   146 				           
+   147 68C9			CONTINUE
+   148 68C9 18			          clc
+   149 68CA A5 CC		          lda I_LSB           ; i+=8
+   150 68CC 69 08		          adc #8
+   151 68CE 85 CC		          sta I_LSB
+   152 68D0 90 02		          bcc END_I_L
+   153 68D2 E6 CD		          inc I_MSB   
+   154
+   155 68D4 C9 00		END_I_L   cmp #END_I_LSB
+   156 68D6 F0 03		          beq RETURN1         ; if i<>$6790 then goto I_LOOP
+   157 68D8 4C 1D 68		          jmp I_LOOP
+   158 68DB A5 CD		RETURN1   lda I_MSB           ; (where $6790 is the last bit of data)
+   159 68DD C9 00		END_I_M   cmp #END_I_MSB      ; (hence only one left - must be sorted)
+   160 68DF F0 03		          beq RETURN2
+   161 68E1 4C 1D 68		          jmp I_LOOP
+   162 68E4 60			RETURN2   rts
+   163
+   164 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   165 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   166 				;; Now to solve part a.
+   167
+   168 = 00CB			PART_NO = $CB
+   169 = 00CE			RESULT_3 = $CE
+   170 = 00CF			RESULT_2 = $CF
+   171 = 00D0			RESULT_1 = $D0
+   172 = 00D1			RESULT_0 = $D1
+   173
+   174 68E5 68			          pla                ; Arg count
+   175 68E6 68			          pla                ; msb of start address
+   176 68E7 85 CD		          sta I_MSB
+   177 68E9 68			          pla                ; lsb of start address
+   178 68EA 85 CC		          sta I_LSB
+   179 68EC 18			          clc                ; Going to assume this loop 
+   180 68ED A9 00		          lda #0             ; always terminates... 
+   181 68EF 8D 18 69		          sta FREE_3A + 1    ; Set for first comparison.
+   182 68F2 8D 23 69		          sta FREE_2A + 1
+   183 68F5 8D 2E 69		          sta FREE_1A + 1
+   184 68F8 8D 39 69		          sta FREE_0A + 1
+   185 68FB 8D 5F 69		          sta FREE_3B + 1    ; Set for first comparison.
+   186 68FE 8D 6A 69		          sta FREE_2B + 1
+   187 6901 8D 75 69		          sta FREE_1B + 1
+   188 6904 8D 80 69		          sta FREE_0B + 1
+   189 6907 85 CE		          sta RESULT_3
+   190 6909 85 CF		          sta RESULT_2
+   191 690B 85 D0		          sta RESULT_1
+   192 690D 85 D1		          sta RESULT_0
+   193 690F 68			          pla                ; Argument set to 1 for part (b)
+   194 6910 68			          pla
+   195 6911 85 CB		          sta PART_NO           
+   196 6913			PA_I_CHECK
+   197
+   198 6913 A0 00		          ldy #0
+   199 6915 B1 CC		          lda (I_LSB),y      ; if FREE < the first number of the pair
+   200 6917 C9 00		FREE_3A   cmp #DIGIT_3       ; we have an answer
+   201 6919 F0 04		          beq NEXT_3A
+   202 691B 90 3D		          bcc PA_NEXT_I
+   203 691D B0 1F		          bcs PA_ANSWER
+   204 691F C8			NEXT_3A   iny
+   205 6920 B1 CC		          lda (I_LSB),y
+   206 6922 C9 00		FREE_2A   cmp #DIGIT_2
+   207 6924 F0 04		          beq NEXT_2A
+   208 6926 90 32		          bcc PA_NEXT_I          
+   209 6928 B0 14		          bcs PA_ANSWER
+   210 692A C8			NEXT_2A   iny
+   211 692B B1 CC		          lda (I_LSB),y
+   212 692D C9 00		FREE_1A   cmp #DIGIT_1
+   213 692F F0 04		          beq NEXT_1A
+   214 6931 90 27		          bcc PA_NEXT_I          
+   215 6933 B0 09		          bcs PA_ANSWER
+   216 6935 C8			NEXT_1A   iny
+   217 6936 B1 CC		          lda (I_LSB),y
+   218 6938 C9 00		FREE_0A   cmp #DIGIT_0
+   219 693A F0 1E		          beq PA_NEXT_I
+   220 693C 90 1C		          bcc PA_NEXT_I
+   221
+   222 693E			PA_ANSWER
+   223 693E A5 CB		          lda PART_NO          ;; For part 1, store the answer, and exit...
+   224 6940 F0 03		          beq PART_ONE
+   225 6942 4C DA 69		          jmp PB_ANSWER
+   226 6945			PART_ONE          
+   227 6945 AD 18 69		          lda FREE_3A+1       ; We've found the answer.
+   228 6948 85 CE		          sta RESULT_3        ; Copy from the code about into
+   229 694A AD 23 69		          lda FREE_2A+1       ; CE,CF,D0,D1 and return.
+   230 694D 85 CF		          sta RESULT_2
+   231 694F AD 2E 69		          lda FREE_1A+1
+   232 6952 85 D0		          sta RESULT_1
+   233 6954 AD 39 69		          lda FREE_0A+1       ; See lower for part 2 handling of an answer.
+   234 6957 85 D1		          sta RESULT_0
+   235 6959 60			          rts
+   236
+   237 695A			PA_NEXT_I                   ; Otherwise, (we didn't find an answer)what's the next free val?
+   238 695A A0 04		          ldy #4
+   239 695C B1 CC		          lda (I_LSB),Y    ; If the num in 4-7 is bigger than FREE
+   240 				                           ; then.... 
+   241 695E C9 00		FREE_3B   cmp #DIGIT_3
+   242 6960 F0 04		          beq NEXT_3
+   243 6962 B0 21		          bcs FREE_IS_SMALLER
+   244 6964 90 66		          bcc FREE_IS_BIGGER
+   245 6966 C8			NEXT_3    iny
+   246 6967 B1 CC		          lda (I_LSB),Y
+   247 6969 C9 00		FREE_2B   cmp #DIGIT_2
+   248 696B F0 04		          beq NEXT_2
+   249 696D B0 16		          bcs FREE_IS_SMALLER
+   250 696F 90 5B		          bcc FREE_IS_BIGGER
+   251 6971 C8			NEXT_2    iny
+   252 6972 B1 CC		          lda (I_LSB),Y
+   253 6974 C9 00		FREE_1B   cmp #DIGIT_1
+   254 6976 F0 04		          beq NEXT_1
+   255 6978 B0 0B		          bcs FREE_IS_SMALLER
+   256 697A 90 50		          bcc FREE_IS_BIGGER
+   257 697C C8			NEXT_1    iny
+   258 697D B1 CC		          lda (I_LSB),Y
+   259 697F C9 00		FREE_0B   cmp #DIGIT_0
+   260 6981 F0 02		          beq FREE_IS_SMALLER
+   261 6983 90 47		          bcc FREE_IS_BIGGER
+   262
+   263 6985			FREE_IS_SMALLER 
+   264 6985 A0 07		          ldy #7
+   265 6987 B1 CC		          lda (I_LSB),Y         
+   266 6989 8D 39 69		          sta FREE_0A+1             ; If we reach here, our best so far was smaller 
+   267 698C 88			          dey                       ; so set best to the right-hand number...
+   268 698D B1 CC		          lda (I_LSB),Y
+   269 698F 8D 2E 69		          sta FREE_1A+1
+   270 6992 88			          dey
+   271 6993 B1 CC		          lda (I_LSB),Y
+   272 6995 8D 23 69		          sta FREE_2A+1
+   273 6998 88			          dey
+   274 6999 B1 CC		          lda (I_LSB),Y
+   275 699B 8D 18 69		          sta FREE_3A+1
+   276 699E 18			          clc
+   277 699F EE 39 69		          inc FREE_0A + 1             ; And increase it by 1
+   278 69A2 D0 10		          bne NO_CARRY_FREE
+   279 69A4 EE 2E 69		          inc FREE_1A + 1
+   280 69A7 D0 0B		          bne NO_CARRY_FREE
+   281 69A9 EE 23 69		          inc FREE_2A + 1
+   282 69AC D0 06		          bne NO_CARRY_FREE
+   283 69AE EE 18 69		          inc FREE_3A + 1
+   284 69B1 D0 01		          bne NO_CARRY_FREE       ; Else free wrapped from FFFFFFFF to 0
+   285 69B3 60			          rts
+   286 69B4			NO_CARRY_FREE          
+   287 69B4 AD 39 69		          lda FREE_0A + 1
+   288 69B7 8D 80 69		          sta FREE_0B + 1
+   289 69BA AD 2E 69		          lda FREE_1A + 1
+   290 69BD 8D 75 69		          sta FREE_1B + 1
+   291 69C0 AD 23 69		          lda FREE_2A + 1
+   292 69C3 8D 6A 69		          sta FREE_2B + 1
+   293 69C6 AD 18 69		          lda FREE_3A + 1
+   294 69C9 8D 5F 69		          sta FREE_3B + 1
+   295
+   296 69CC			FREE_IS_BIGGER                   ; (If free was already bigger, leave FREE alone.)          
+   297 69CC A5 CC		          lda I_LSB
+   298 69CE 18			          clc
+   299 69CF 69 08		          adc #8
+   300 69D1 85 CC		          sta I_LSB              ; i = i + 8
+   301 69D3 90 02		          bcc PA_NO_CARRY_I
+   302 69D5 E6 CD		          inc I_MSB
+   303 69D7			PA_NO_CARRY_I
+   304
+   305 69D7 4C 13 69		          jmp PA_I_CHECK
+   306 				          
+   307 69DA			PB_ANSWER                     ; PART B...
+   308 69DA A0 03		          ldy #3
+   309 69DC B1 CC		          lda (I_LSB),y
+   310 69DE 38			          sec                 ; Calculate NEXT_BLOCKED_VAL - CURRENT_FREE_VAL
+   311 69DF ED 39 69		          sbc FREE_0A+1
+   312 69E2 8D 03 06		          sta 1539
+   313 69E5 88			          dey
+   314 				         
+   315 69E6 B1 CC		          lda (I_LSB),y
+   316 69E8 ED 2E 69		          sbc FREE_1A+1
+   317 69EB 8D 02 06		          sta 1538
+   318 69EE 88			          dey
+   319 				          
+   320 69EF B1 CC		          lda (I_LSB),y
+   321 69F1 ED 23 69		          sbc FREE_2A+1
+   322 69F4 8D 01 06		          sta 1537
+   323 69F7 88			          dey
+   324 				          
+   325 69F8 B1 CC		          lda (I_LSB),y
+   326 69FA ED 18 69		          sbc FREE_3A+1
+   327 69FD 8D 00 06		          sta 1536
+   328 				          
+   329 6A00 18			          clc               ; And add the result to the counter
+   330 6A01 A5 D1		          lda RESULT_0
+   331 6A03 6D 03 06		          adc 1539
+   332 6A06 85 D1		          sta RESULT_0
+   333 6A08 A5 D0		          lda RESULT_1
+   334 6A0A 6D 02 06		          adc 1538
+   335 6A0D 85 D0		          sta RESULT_1
+   336 6A0F A5 CF		          lda RESULT_2
+   337 6A11 6D 01 06		          adc 1537
+   338 6A14 85 CF		          sta RESULT_2
+   339 6A16 A5 CE		          lda RESULT_3
+   340 6A18 6D 00 06		          adc 1536
+   341 6A1B 85 CE		          sta RESULT_3
+   342
+   343 6A1D 4C 85 69		          jmp FREE_IS_SMALLER   ; Not the end - so next free possibility is
+   344 				                                ; right-hand-number plus one.

@@ -1,0 +1,10 @@
+0 ? CHR$(125);"Advent of Code 2016, day 3":? "in Atari Basic":DIM N(3,3):X=1:Y=1:OPEN #1,4,0,"H:INPUT.TXT"
+1 S1=0:S2=0:N(1,1)=0
+2 GET #1,A:IF A=32 THEN GOTO 2
+3 N(X,Y)=N(X,Y)*10+(A-48):GET #1,A:IF A<>32 AND A<>10 THEN GOTO 3
+4 IF (X<3) THEN X=X+1:N(X,Y)=0:GOTO 2
+5 IF N(1,Y)+N(2,Y)>N(3,Y) AND N(1,Y)+N(3,Y)>N(2,Y) AND N(2,Y)+N(3,Y)>N(1,Y) THEN S1=S1+1
+6 TRAP 9:X=1:Y=Y+1:IF (Y<4) THEN N(X,Y)=0:GOTO 2
+7 FOR X=1 TO 3:IF N(X,1)+N(X,2)>N(X,3) AND N(X,1)+N(X,3)>N(X,2) AND N(X,2)+N(X,3)>N(X,1) THEN S2=S2+1
+8 NEXT X:X=1:Y=1:N(X,Y)=0:GOTO 2
+9 CLOSE #1:? "a:";S1:? "b:";S2:END 

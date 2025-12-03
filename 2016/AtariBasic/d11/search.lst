@@ -1,0 +1,100 @@
+mads 2.0.8 build 31 (8 Jan 19)
+Source: C:\Files\Dev\Eclipse\adv1611\search.asm
+     1 				; Advent of Code 2016, Day 11, Atari asm (6502)
+     2 				; Just a little routine to search through
+     3 				; an unsorted list of 3-byte or 4-byte groups
+     4 				; for a particular entry. 
+     5
+     6 				       org $0600                ; Fit in page 6 - 256 spare bytes...
+     7
+     8 FFFF> 0600-06AD> 68	           pla                  ; Arg count
+     9 0601 68			           pla                  ;    Arg 0 msb
+    10 0602 68			           pla                  ;    Arg 0 lsb
+    11 0603 AA			           tax                  ; x = arg[0] LSB - 3 or 4 for bytes per val.
+    12 0604 8E 59 06		           stx A1 + 1
+    13 0607 8E 67 06		           stx A2 + 1
+    14 060A 8E 75 06		           stx A3 + 1
+    15 060D A9 40		           lda #64
+    16 060F 8D 36 06		           sta L1+2
+    17 0612 8D 3D 06		           sta L2+2
+    18 0615 8D 44 06		           sta L3+2
+    19 0618 8D 4F 06		           sta L4+2
+    20 061B A0 00		           ldy #0
+    21 061D 8C 35 06		           sty L1+1
+    22 0620 C8			           iny
+    23 0621 8C 3C 06		           sty L2+1
+    24 0624 C8			           iny
+    25 0625 8C 43 06		           sty L3+1
+    26 0628 C8			           iny
+    27 0629 8C 4E 06		           sty L4+1
+    28 062C 68			           pla                 ; Arg 1 msb
+    29 062D 8D 94 06		           sta END_MSB+1
+    30 0630 68			           pla                 ; Arg 1 lsb
+    31 0631 8D 9B 06		           sta END_LSB+1
+    32 				           
+    33 				           
+    34 0634 AD 00 40		L1         lda 16384
+    35 0637 C5 CB		           cmp 203
+    36 0639 D0 19		           bne next
+    37 063B AD 01 40		L2         lda 16385
+    38 063E C5 CC		           cmp 204
+    39 0640 D0 12		           bne next
+    40 0642 AD 02 40		L3         lda 16386
+    41 0645 C5 CD		           cmp 205
+    42 0647 D0 0B		           bne next
+    43 0649 E0 03		           cpx #3
+    44 064B F0 58		           beq found
+    45 064D AD 03 40		L4         lda 16387
+    46 0650 C5 CE		           cmp 206
+    47 0652 F0 51		           beq found
+    48 0654			next
+    49 0654 AD 35 06		           lda L1+1         ;   Get L1 address LSB
+    50 0657 18			           clc
+    51 0658 69 03		A1         adc #3           ;   (#3 overwritten by arg[0])
+    52 065A 8D 35 06		           sta L1+1
+    53 065D 90 03		           bcc dig2
+    54 065F EE 36 06		           inc L1+2
+    55
+    56 0662 AD 3C 06		dig2       lda L2+1
+    57 0665 18			           clc
+    58 0666 69 03		A2         adc #3           ;   (#3 overwritten by arg[0])
+    59 0668 8D 3C 06		           sta L2+1
+    60 066B 90 03		           bcc dig3
+    61 066D EE 3D 06		           inc L2+2
+    62
+    63 0670 AD 43 06		dig3       lda L3+1
+    64 0673 18			           clc
+    65 0674 69 03		A3         adc #3           ;   (#3 overwritten by arg[0])
+    66 0676 8D 43 06		           sta L3+1
+    67 0679 90 03		           bcc dig4
+    68 067B EE 44 06		           inc L3+2
+    69
+    70 067E E0 03		dig4       cpx #3
+    71 0680 F0 0E		           beq skip_dig4
+    72 0682 AD 4E 06		           lda L4+1
+    73 0685 18			           clc
+    74 0686 69 04		A4         adc #4           ;   (#3 overwritten by arg[0])
+    75 0688 8D 4E 06		           sta L4+1
+    76 068B 90 03		           bcc skip_dig4
+    77 068D EE 4F 06		           inc L4+2
+    78 				           
+    79 0690 AD 36 06		skip_dig4  lda L1+2
+    80 0693 C9 40		END_MSB    cmp #64
+    81 0695 D0 9D		           bne L1
+    82 0697 AD 35 06		           lda L1+1
+    83 069A C9 00		END_LSB    cmp #0           
+    84 069C D0 96		           bne L1
+    85 069E A9 00		           lda #0
+    86 06A0 85 D4		           sta 212
+    87 06A2 4C A9 06		           jmp not_found
+    88
+    89 06A5 A9 01		found      lda #1
+    90 06A7 85 D4		           sta 212
+    91 06A9 A9 00		not_found  lda #0
+    92 06AB 85 D5		           sta 213
+    93 06AD 60			           rts
+    94 				 
+    95 				           
+    96 				       
+    97
+    98
