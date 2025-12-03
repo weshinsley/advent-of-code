@@ -1,7 +1,7 @@
-# advent-of-code-2016
+# advent-of-code-2023
 
 In R. From this folder:-
 
 * Run a day with `Rscript d01.R` or `run 01`
 * Run them all with `run.bat`
-* inputs are expected to be in (eg) `2016/inputs/input_1.txt` 
+* inputs are expected to be in (eg) `2023/inputs/input_1.txt` 
